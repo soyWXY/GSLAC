@@ -15,17 +15,19 @@ NVCCFLAGS := -ptx
 
 CLEAN_LIST := vectorAdd.out vectorAdd_kernel.ptx
 
-TARGET_NAME := vectorAdd.out
-
-TARGET := $(TARGET_NAME)
+TARGET := vectorAdd.out
+ANS := test.out
 KERNEL_SRC := vectorAdd_kernel.cu
 PTX := vectorAdd_kernel.ptx
 SRC := vectorAdd.cpp
 
 $(TARGET): $(SRC) $(PTX)
-	$(CXX) $(CXXFLAGS) -o vectorAdd.out $(INC) $(LIB) $(SRC) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(INC) $(LIB) $(SRC) $(LDFLAGS)
 $(PTX): $(KERNEL_SRC)
 	$(NVCC) $(NVCCFLAGS) $(KERNEL_SRC)
+
+$(ANS): $(SRC)
+	$(CXX) $(CXXFLAGS) -o $(ANS) $(INC) $(LIB) $(SRC) $(LDFLAGS)
 
 # default rule
 default: all
@@ -33,6 +35,9 @@ default: all
 # phony rules
 .PHONY: all
 all: $(TARGET)
+
+.PHONY: ans
+ans: $(ANS)
 
 .PHONY: clean
 clean:

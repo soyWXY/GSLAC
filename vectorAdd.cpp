@@ -7,21 +7,30 @@
 #include <cuda.h>
 
 // includes, CUDA
-#include <builtin_types.h>
+// #include <builtin_types.h>
 
 using namespace std;
 
+// #ifndef checkCudaErrors
+// #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+// // These are the inline versions for all of the SDK helper functions
+// inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
+//   if (CUDA_SUCCESS != err) {
+//     const char *errorStr = NULL;
+//     cuGetErrorString(err, &errorStr);
+//     fprintf(stderr,
+//             "checkCudaErrors() Driver API error = %04d \"%s\" from file <%s>, "
+//             "line %i.\n",
+//             err, errorStr, file, line);
+//     exit(EXIT_FAILURE);
+//   }
+// }
+// #endif
+
 #ifndef checkCudaErrors
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-// These are the inline versions for all of the SDK helper functions
 inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
-  if (CUDA_SUCCESS != err) {
-    const char *errorStr = NULL;
-    cuGetErrorString(err, &errorStr);
-    fprintf(stderr,
-            "checkCudaErrors() Driver API error = %04d \"%s\" from file <%s>, "
-            "line %i.\n",
-            err, errorStr, file, line);
+if (0 != err) {
     exit(EXIT_FAILURE);
   }
 }
@@ -50,96 +59,99 @@ void RandomInit(float *, int);
 int main(int argc, char **argv)
 {
     printf("Vector Addition (Driver API)\n");
-    int N = 50000, devID = 0;
-    size_t  size = N * sizeof(float);
+    // int N = 50000;
+    // size_t  size = N * sizeof(float);
 
     // create CUDA device & context, and load the kernel
     checkCudaErrors(cuInit(0));
     checkCudaErrors(cuDeviceGet(&cuDevice, 0)); // pick first device
     checkCudaErrors(cuCtxCreate(&cuContext, 0, cuDevice));
-    checkCudaErrors(cuModuleLoad(&cuModule, FATBIN_FILE));
-    checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
+    unsigned int api_version;
+    checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
+    printf("API version: %u\n", api_version);
+    //checkCudaErrors(cuModuleLoad(&cuModule, FATBIN_FILE));
+    //checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
 
-    // allocate host vectors
-    h_A = (float *)malloc(size);
-    h_B = (float *)malloc(size);
-    h_C = (float *)malloc(size);
+    // // allocate host vectors
+    // h_A = (float *)malloc(size);
+    // h_B = (float *)malloc(size);
+    // h_C = (float *)malloc(size);
 
-    // Initialize input vectors
-    RandomInit(h_A, N);
-    RandomInit(h_B, N);
-    // Allocate vectors in device memory
-    checkCudaErrors(cuMemAlloc(&d_A, size));
+    // // Initialize input vectors
+    // RandomInit(h_A, N);
+    // RandomInit(h_B, N);
+    // // Allocate vectors in device memory
+    // checkCudaErrors(cuMemAlloc(&d_A, size));
 
-    checkCudaErrors(cuMemAlloc(&d_B, size));
+    // checkCudaErrors(cuMemAlloc(&d_B, size));
 
-    checkCudaErrors(cuMemAlloc(&d_C, size));
-    // Copy vectors from host memory to device memory
-    checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
+    // checkCudaErrors(cuMemAlloc(&d_C, size));
+    // // Copy vectors from host memory to device memory
+    // checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
 
-    checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
+    // checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
 
-    int threadsPerBlock = 256;
-    int blocksPerGrid   = (N + threadsPerBlock - 1) / threadsPerBlock;
+    // int threadsPerBlock = 256;
+    // int blocksPerGrid   = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    void *args[] = { &d_A, &d_B, &d_C, &N };
+    // void *args[] = { &d_A, &d_B, &d_C, &N };
     
-    // Launch the CUDA kernel
-        checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
-                               threadsPerBlock, 1, 1,
-                               0,
-                               NULL, args, NULL));
+    // // Launch the CUDA kernel
+    //     checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
+    //                            threadsPerBlock, 1, 1,
+    //                            0,
+    //                            NULL, args, NULL));
 
-    checkCudaErrors(cuCtxSynchronize());
+    // checkCudaErrors(cuCtxSynchronize());
 
-    // copy the result from device back to host
-    checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
+    // // copy the result from device back to host
+    // checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
 
-    // Verify result
-    int i;
+    // // Verify result
+    // int i;
 
-    for (i = 0; i < 10; ++i)
-    {
-        float sum = h_A[i] + h_B[i];
+    // for (i = 0; i < 10; ++i)
+    // {
+    //     float sum = h_A[i] + h_B[i];
 
-        printf("h_A: %f + h_b: %f = sum: %f (h_C = %f)\n", h_A[i], h_B[i], sum, h_C[i]);
+    //     printf("h_A: %f + h_b: %f = sum: %f (h_C = %f)\n", h_A[i], h_B[i], sum, h_C[i]);
 
-        // if (fabs(h_C[i] - sum) > 1e-7f)
-        // {
-        //     break;
-        // }
-    }
+    //     // if (fabs(h_C[i] - sum) > 1e-7f)
+    //     // {
+    //     //     break;
+    //     // }
+    // }
 
     return 0;
 }
 
-int CleanupNoFailure()
-{
-    // Free device memory
-    checkCudaErrors(cuMemFree(d_A));
-    checkCudaErrors(cuMemFree(d_B));
-    checkCudaErrors(cuMemFree(d_C));
+// int CleanupNoFailure()
+// {
+//     // Free device memory
+//     checkCudaErrors(cuMemFree(d_A));
+//     checkCudaErrors(cuMemFree(d_B));
+//     checkCudaErrors(cuMemFree(d_C));
 
-    // Free host memory
-    if (h_A)
-    {
-        free(h_A);
-    }
+//     // Free host memory
+//     if (h_A)
+//     {
+//         free(h_A);
+//     }
 
-    if (h_B)
-    {
-        free(h_B);
-    }
+//     if (h_B)
+//     {
+//         free(h_B);
+//     }
 
-    if (h_C)
-    {
-        free(h_C);
-    }
+//     if (h_C)
+//     {
+//         free(h_C);
+//     }
 
-    checkCudaErrors(cuCtxDestroy(cuContext));
+//     checkCudaErrors(cuCtxDestroy(cuContext));
 
-    return EXIT_SUCCESS;
-}
+//     return EXIT_SUCCESS;
+// }
 
 // Allocates an array with random float entries.
 void RandomInit(float *data, int n)
