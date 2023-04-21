@@ -10,17 +10,12 @@ NVCCFLAGS := -ptx
 
 CLEAN_LIST := *.out *.so *.ptx
 
-TARGET := vectorAdd.out
 CLIENT := client.out
 SERVER := server.out
 KERNEL := vectorAdd_kernel.cu
 PTX := vectorAdd_kernel.ptx
 SRC := vectorAdd.cpp
 SO := libmycudadrv.so
-
-$(TARGET): $(SRC) $(PTX)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(INC) $(LIB) $(SRC) $(LDFLAGS)
-
 
 $(CLIENT): $(SRC) $(SO) $(PTX)
 	$(CXX) $(INC) -L. -o $(CLIENT) $(SRC) -lmycudadrv 
