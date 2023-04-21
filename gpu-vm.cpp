@@ -27,24 +27,24 @@ int main(){
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  
     serv_addr.sin_port = htons(5566);
 
-    // // Start === Dynamic Loading CUDA Driver API
-    // void *handle;
-    // CUresult (*cuInit)(unsigned int);
-    // CUresult (*cuDeviceGet)(CUdevice*, int);
-    // CUresult (*cuCtxCreate)(CUcontext*, unsigned int, CUdevice);
-    // CUresult (*cuCtxGetApiVersion)(CUcontext, unsigned int*);
-    // CUresult (*cuModuleLoad)(CUmodule*, const char*);
-    // CUresult (*cuModuleGetFunction)(CUfunction*, CUmodule, const char*);
-    // CUresult (*cuMemAlloc)(CUdeviceptr*, size_t);
-    // CUresult (*cuMemcpyHtoD)(CUdeviceptr, const void*, size_t);
-    // CUresult (*cuLaunchKernel)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**);
-    // CUresult (*cuCtxSynchronize)();
-    // CUresult (*cuMemcpyDtoH)(void*, CUdeviceptr, size_t);
-    // CUresult (*cuMemFree)(CUdeviceptr);
-    // CUresult (*cuCtxDestroy)(CUcontext);
+    // Start === Dynamic Loading CUDA Driver API
+    void *handle;
+    CUresult (*cuInit)(unsigned int);
+    CUresult (*cuDeviceGet)(CUdevice*, int);
+    CUresult (*cuCtxCreate)(CUcontext*, unsigned int, CUdevice);
+    CUresult (*cuCtxGetApiVersion)(CUcontext, unsigned int*);
+    CUresult (*cuModuleLoad)(CUmodule*, const char*);
+    CUresult (*cuModuleGetFunction)(CUfunction*, CUmodule, const char*);
+    CUresult (*cuMemAlloc)(CUdeviceptr*, size_t);
+    CUresult (*cuMemcpyHtoD)(CUdeviceptr, const void*, size_t);
+    CUresult (*cuLaunchKernel)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**);
+    CUresult (*cuCtxSynchronize)();
+    CUresult (*cuMemcpyDtoH)(void*, CUdeviceptr, size_t);
+    CUresult (*cuMemFree)(CUdeviceptr);
+    CUresult (*cuCtxDestroy)(CUcontext);
 
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-    // // End === Dynamic Loading CUDA Driver API
+    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // End === Dynamic Loading CUDA Driver API
 
     bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     listen(serv_sock, 20);
@@ -60,12 +60,59 @@ int main(){
 
         if (strcmp(buf, "0001") == 0) {
             std::cout << "0001: cuInit" << std::endl;
+            
+            unsigned int flags = -1;
+            recv(clnt_sock, &flags, sizeof(unsigned int), 0);
+            std::cout << "Receive: Flags " << flags << std::endl;
+
+            cuInit = reinterpret_cast<CUresult(*)(unsigned int)>(dlsym(handle, "cuInit"));
+            CUresult err;
+            err = cuInit(flags);
+
+            send(clnt_sock, &err, sizeof(CUresult), 0);
+
         } else if (strcmp(buf, "0010") == 0) {
             std::cout << "0010: cuDeviceGet" << std::endl;
+
+            int devID = -1;
+            recv(clnt_sock, &devID, sizeof(int), 0);
+            std::cout << "Receive: devID " << devID << std::endl;
+
+            cuDeviceGet = reinterpret_cast<CUresult(*)(CUdevice*, int)>(dlsym(handle, "cuDeviceGet"));
+	
+            CUresult err;
+            err = cuDeviceGet(&cuDevice, devID);
+
+            send(clnt_sock, &err, sizeof(CUresult), 0);
+
         } else if (strcmp(buf, "0011") == 0) {
             std::cout << "0011: cuCtxCreate" << std::endl;
+
+            unsigned int flags = -1;
+            recv(clnt_sock, &flags, sizeof(unsigned int), 0);
+            std::cout << "Receive: flags " << flags << std::endl;
+
+            cuCtxCreate = reinterpret_cast<CUresult(*)(CUcontext*, unsigned int, CUdevice)>(dlsym(handle, "cuCtxCreate"));
+	
+            CUresult err;
+            err = cuCtxCreate(&cuContext, flags, cuDevice);
+
+            send(clnt_sock, &err, sizeof(CUresult), 0);
+
         } else if (strcmp(buf, "0100") == 0) {
             std::cout << "0100: cuCtxGetApiVersion" << std::endl;
+
+            unsigned int version = -1;
+
+            cuCtxGetApiVersion = reinterpret_cast<CUresult(*)(CUcontext, unsigned int*)>(dlsym(handle, "cuCtxGetApiVersion"));
+	
+            CUresult err;
+            err = cuCtxGetApiVersion(cuContext, &version);
+
+            send(clnt_sock, &version, sizeof(unsigned int), 0);
+
+            send(clnt_sock, &err, sizeof(CUresult), 0);
+
         } else if (strcmp(buf, "0101") == 0) {
             std::cout << "0101: cuModuleLoad" << std::endl;
         } else if (strcmp(buf, "0110") == 0) {
@@ -84,6 +131,12 @@ int main(){
             std::cout << "1100: cuMemFree" << std::endl;
         } else if (strcmp(buf, "1101") == 0) {
             std::cout << "1101: cuCtxDestroy" << std::endl;
+
+            cuCtxDestroy = reinterpret_cast<CUresult(*)(CUcontext)>(dlsym(handle, "cuCtxDestroy"));
+	
+            CUresult err;
+            err = cuCtxDestroy(cuContext);
+
         } else {
             printf("Exception\n");
         }
@@ -93,8 +146,8 @@ int main(){
 
     close(serv_sock);
 
-    // // Close CUDA Driver API Library
-    // dlclose(handle);
+    // Close CUDA Driver API Library
+    dlclose(handle);
 
     return 0;
 }

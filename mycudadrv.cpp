@@ -16,132 +16,152 @@
 
 CUresult cuInit(unsigned int Flags)
 {
-    // int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
   
-    // struct sockaddr_in serv_addr;
-    // memset(&serv_addr, 0, sizeof(serv_addr));  
-    // serv_addr.sin_family = AF_INET;  
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    // serv_addr.sin_port = htons(PORT); 
-    // connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.sin_port = htons(PORT); 
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
-    // char com[] = "0001";
-    // send(sock, com, strlen(com), 0);
+    char com[] = "0001";
+    send(sock, com, strlen(com), 0);
 
-    // close(sock);
+    send(sock, &Flags, sizeof(unsigned int), 0);
+
+    CUresult err;
+    recv(sock, &err, sizeof(CUresult), 0);
+
+    close(sock);
 
     std::cout << "Hack cuInit in libcuda.so" << std::endl;
 
-    void *handle;
-    CUresult (*cuInit)(unsigned int);
+    // void *handle;
+    // CUresult (*cuInit)(unsigned int);
 
-    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
  
-    cuInit = reinterpret_cast<CUresult(*)(unsigned int)>(dlsym(handle, "cuInit"));
+    // cuInit = reinterpret_cast<CUresult(*)(unsigned int)>(dlsym(handle, "cuInit"));
 
-    CUresult err;
-    err = cuInit(Flags);
+    // CUresult err;
+    // err = cuInit(Flags);
 
-    dlclose(handle);
+    // dlclose(handle);
 
     return err;
 }
 
 CUresult cuDeviceGet(CUdevice* device, int ordinal)
 {
-    // int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
   
-    // struct sockaddr_in serv_addr;
-    // memset(&serv_addr, 0, sizeof(serv_addr));  
-    // serv_addr.sin_family = AF_INET;  
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    // serv_addr.sin_port = htons(PORT); 
-    // connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.sin_port = htons(PORT); 
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
-    // char com[] = "0010";
-    // send(sock, com, strlen(com), 0);
+    char com[] = "0010";
+    send(sock, com, strlen(com), 0);
 
-    // close(sock);
+    send(sock, &ordinal, sizeof(int), 0);
+
+    CUresult err;
+    recv(sock, &err, sizeof(CUresult), 0);
+
+    close(sock);
     
     std::cout << "Hack cuDeviceGet in libcuda.so" << std::endl;
 
-    void *handle;
-    CUresult (*cuDeviceGet)(CUdevice*, int);
+    // void *handle;
+    // CUresult (*cuDeviceGet)(CUdevice*, int);
 
-    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
 
-    cuDeviceGet = reinterpret_cast<CUresult(*)(CUdevice*, int)>(dlsym(handle, "cuDeviceGet"));
+    // cuDeviceGet = reinterpret_cast<CUresult(*)(CUdevice*, int)>(dlsym(handle, "cuDeviceGet"));
 	
-    CUresult err;
-    err = cuDeviceGet(device, ordinal);
+    // CUresult err;
+    // err = cuDeviceGet(device, ordinal);
 
-    dlclose(handle);
+    // dlclose(handle);
 
     return err;
 }
 
 CUresult cuCtxCreate(CUcontext* pctx, unsigned int flags, CUdevice dev)
 {
-    // int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
   
-    // struct sockaddr_in serv_addr;
-    // memset(&serv_addr, 0, sizeof(serv_addr));  
-    // serv_addr.sin_family = AF_INET;  
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    // serv_addr.sin_port = htons(PORT); 
-    // connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.sin_port = htons(PORT); 
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
-    // char com[] = "0011";
-    // send(sock, com, strlen(com), 0);
+    char com[] = "0011";
+    send(sock, com, strlen(com), 0);
 
-    // close(sock);
+    send(sock, &flags, sizeof(unsigned int), 0);
+
+    CUresult err;
+    recv(sock, &err, sizeof(CUresult), 0);
+
+    close(sock);
 
     std::cout << "Hack cuCtxCreate in libcuda.so" << std::endl;
 
-    void *handle;
-    CUresult (*cuCtxCreate)(CUcontext*, unsigned int, CUdevice);
+    // void *handle;
+    // CUresult (*cuCtxCreate)(CUcontext*, unsigned int, CUdevice);
 
-    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
 
-    cuCtxCreate = reinterpret_cast<CUresult(*)(CUcontext*, unsigned int, CUdevice)>(dlsym(handle, "cuCtxCreate"));
+    // cuCtxCreate = reinterpret_cast<CUresult(*)(CUcontext*, unsigned int, CUdevice)>(dlsym(handle, "cuCtxCreate"));
 	
-    CUresult err;
-    err = cuCtxCreate(pctx, flags, dev);
+    // CUresult err;
+    // err = cuCtxCreate(pctx, flags, dev);
 
-    dlclose(handle);
+    // dlclose(handle);
 
     return err;
 }
 
 CUresult cuCtxGetApiVersion(CUcontext ctx, unsigned int* version)
 {
-    // int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
   
-    // struct sockaddr_in serv_addr;
-    // memset(&serv_addr, 0, sizeof(serv_addr));  
-    // serv_addr.sin_family = AF_INET;  
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    // serv_addr.sin_port = htons(PORT); 
-    // connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.sin_port = htons(PORT); 
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
-    // char com[] = "0100";
-    // send(sock, com, strlen(com), 0);
+    char com[] = "0100";
+    send(sock, com, strlen(com), 0);
 
-    // close(sock);
+    recv(sock, version, sizeof(unsigned int), 0);
+
+    CUresult err;
+    recv(sock, &err, sizeof(CUresult), 0);
+
+    close(sock);
 
     std::cout << "Hack cuCtxGetApiVersion in libcuda.so" << std::endl;
 
-    void *handle;
-    CUresult (*cuCtxGetApiVersion)(CUcontext, unsigned int*);
+    // void *handle;
+    // CUresult (*cuCtxGetApiVersion)(CUcontext, unsigned int*);
 
-    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
 
-    cuCtxGetApiVersion = reinterpret_cast<CUresult(*)(CUcontext, unsigned int*)>(dlsym(handle, "cuCtxGetApiVersion"));
+    // cuCtxGetApiVersion = reinterpret_cast<CUresult(*)(CUcontext, unsigned int*)>(dlsym(handle, "cuCtxGetApiVersion"));
 	
-    CUresult err;
-    err = cuCtxGetApiVersion(ctx, version);
+    // CUresult err;
+    // err = cuCtxGetApiVersion(ctx, version);
 
-    dlclose(handle);
+    // dlclose(handle);
 
     return err;
 }
@@ -304,19 +324,36 @@ CUresult cuMemFree(CUdeviceptr dptr)
 
 CUresult cuCtxDestroy(CUcontext ctx)
 {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+  
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));  
+    serv_addr.sin_family = AF_INET;  
+    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.sin_port = htons(PORT); 
+    connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    
+    char com[] = "1101";
+    send(sock, com, strlen(com), 0);
+
+    CUresult err;
+    recv(sock, &err, sizeof(CUresult), 0);
+
+    close(sock);
+
     std::cout << "Hack cuCtxDestroy in libcuda.so" << std::endl;
 
-    void *handle;
-    CUresult (*cuCtxDestroy)(CUcontext);
+    // void *handle;
+    // CUresult (*cuCtxDestroy)(CUcontext);
 
-    handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
+    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
 
-    cuCtxDestroy = reinterpret_cast<CUresult(*)(CUcontext)>(dlsym(handle, "cuCtxDestroy"));
+    // cuCtxDestroy = reinterpret_cast<CUresult(*)(CUcontext)>(dlsym(handle, "cuCtxDestroy"));
 	
-    CUresult err;
-    err = cuCtxDestroy(ctx);
+    // CUresult err;
+    // err = cuCtxDestroy(ctx);
 
-    dlclose(handle);
+    // dlclose(handle);
 
     return err;
 }

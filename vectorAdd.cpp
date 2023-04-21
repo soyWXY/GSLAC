@@ -32,9 +32,9 @@ using namespace std;
 inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
 if (0 != err) {
     fprintf(stderr,
-            "checkCudaErrors() Driver API error from file <%s>, "
+            "checkCudaErrors() Driver API error = %04d from file <%s>, "
             "line %i.\n",
-            file, line);
+            err, file, line);
     exit(EXIT_FAILURE);
   }
 }
@@ -73,52 +73,54 @@ int main(int argc, char **argv)
     checkCudaErrors(cuCtxCreate(&cuContext, 0, cuDevice));
     checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
     printf("Client: API version: %u\n", api_version);
-    checkCudaErrors(cuModuleLoad(&cuModule, FATBIN_FILE));
-    checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
+    // checkCudaErrors(cuModuleLoad(&cuModule, FATBIN_FILE));
+    // checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
 
-    // allocate host vectors
-    h_A = (float *)malloc(size);
-    h_B = (float *)malloc(size);
-    h_C = (float *)malloc(size);
+    // // allocate host vectors
+    // h_A = (float *)malloc(size);
+    // h_B = (float *)malloc(size);
+    // h_C = (float *)malloc(size);
 
-    // Initialize input vectors
-    RandomInit(h_A, N);
-    RandomInit(h_B, N);
-    // Allocate vectors in device memory
-    checkCudaErrors(cuMemAlloc(&d_A, size));
+    // // Initialize input vectors
+    // RandomInit(h_A, N);
+    // RandomInit(h_B, N);
+    // // Allocate vectors in device memory
+    // checkCudaErrors(cuMemAlloc(&d_A, size));
 
-    checkCudaErrors(cuMemAlloc(&d_B, size));
+    // checkCudaErrors(cuMemAlloc(&d_B, size));
 
-    checkCudaErrors(cuMemAlloc(&d_C, size));
-    // Copy vectors from host memory to device memory
-    checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
+    // checkCudaErrors(cuMemAlloc(&d_C, size));
+    // // Copy vectors from host memory to device memory
+    // checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
 
-    checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
+    // checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
 
-    int threadsPerBlock = 256;
-    int blocksPerGrid   = (N + threadsPerBlock - 1) / threadsPerBlock;
+    // int threadsPerBlock = 256;
+    // int blocksPerGrid   = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    void *args[] = { &d_A, &d_B, &d_C, &N };
+    // void *args[] = { &d_A, &d_B, &d_C, &N };
     
-    // Launch the CUDA kernel
-        checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
-                               threadsPerBlock, 1, 1,
-                               0,
-                               NULL, args, NULL));
+    // // Launch the CUDA kernel
+    //     checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
+    //                            threadsPerBlock, 1, 1,
+    //                            0,
+    //                            NULL, args, NULL));
 
-    checkCudaErrors(cuCtxSynchronize());
+    // checkCudaErrors(cuCtxSynchronize());
 
-    // copy the result from device back to host
-    checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
+    // // copy the result from device back to host
+    // checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
 
-    // Verify result
-    int i;
+    // // Verify result
+    // int i;
 
-    for (i = 0; i < 10; ++i)
-    {
-        float sum = h_A[i] + h_B[i];
-        std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
-    }
+    // for (i = 0; i < 10; ++i)
+    // {
+    //     float sum = h_A[i] + h_B[i];
+    //     std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
+    // }
+
+    checkCudaErrors(cuCtxDestroy(cuContext));
 
     return 0;
 }
