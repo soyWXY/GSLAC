@@ -5,6 +5,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <linux/vm_sockets.h>
 #include <netinet/in.h>
 
 #include <dlfcn.h>
@@ -29,7 +30,7 @@ int main(){
     serv_addr.svm_family = AF_VSOCK;  
     // serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  
     serv_addr.svm_port = htons(5566);
-    addr.svm_cid = VMADDR_CID_ANY;
+    serv_addr.svm_cid = VMADDR_CID_ANY;
 
     // Start === Dynamic Loading CUDA Driver API
     void *handle;
