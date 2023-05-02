@@ -7,22 +7,25 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <linux/vm_sockets.h>
 #include <netinet/in.h>
 
 #include <cuda.h>
 
-#define HOST "127.0.0.1"
+#define VMADDR_CID_GPU_SANDBOX 3
+// #define HOST "127.0.0.1"
 #define PORT 5566
 
 CUresult cuInit(unsigned int Flags)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT);
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0001";
@@ -54,13 +57,14 @@ CUresult cuInit(unsigned int Flags)
 
 CUresult cuDeviceGet(CUdevice* device, int ordinal)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT);
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0010";
@@ -92,13 +96,14 @@ CUresult cuDeviceGet(CUdevice* device, int ordinal)
 
 CUresult cuCtxCreate(CUcontext* pctx, unsigned int flags, CUdevice dev)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0011";
@@ -130,13 +135,14 @@ CUresult cuCtxCreate(CUcontext* pctx, unsigned int flags, CUdevice dev)
 
 CUresult cuCtxGetApiVersion(CUcontext ctx, unsigned int* version)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0100";
@@ -168,13 +174,14 @@ CUresult cuCtxGetApiVersion(CUcontext ctx, unsigned int* version)
 
 CUresult cuModuleLoad(CUmodule* module, const char* fname)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0101";
@@ -204,13 +211,14 @@ CUresult cuModuleLoad(CUmodule* module, const char* fname)
 
 CUresult cuModuleGetFunction(CUfunction* hfunc, CUmodule hmod, const char* name)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0110";
@@ -240,13 +248,14 @@ CUresult cuModuleGetFunction(CUfunction* hfunc, CUmodule hmod, const char* name)
 
 CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "0111";
@@ -281,13 +290,14 @@ CUresult cuMemAlloc(CUdeviceptr* dptr, size_t bytesize)
 
 CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void* srcHost, size_t ByteCount)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1000";
@@ -323,13 +333,14 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
                         unsigned int  blockDimX, unsigned int blockDimY, unsigned int blockDimZ,
                         unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1001";
@@ -364,13 +375,14 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
 
 CUresult cuCtxSynchronize()
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1010";
@@ -400,13 +412,14 @@ CUresult cuCtxSynchronize()
 
 CUresult cuMemcpyDtoH(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1011";
@@ -440,13 +453,14 @@ CUresult cuMemcpyDtoH(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount)
 
 CUresult cuMemFree(CUdeviceptr dptr)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1100";
@@ -476,13 +490,14 @@ CUresult cuMemFree(CUdeviceptr dptr)
 
 CUresult cuCtxDestroy(CUcontext ctx)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_VSOCK, SOCK_STREAM, 0);
   
-    struct sockaddr_in serv_addr;
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));  
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr(HOST);  
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr(HOST);  
+    serv_addr.svm_port = htons(PORT); 
+    serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     
     char com[5] = "1101";

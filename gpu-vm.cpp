@@ -23,12 +23,13 @@ CUdeviceptr d_C = 0;
 
 int main(){
 
-    int serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    struct sockaddr_in serv_addr;
+    int serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
+    struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;  
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  
-    serv_addr.sin_port = htons(5566);
+    serv_addr.svm_family = AF_VSOCK;  
+    // serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");  
+    serv_addr.svm_port = htons(5566);
+    addr.svm_cid = VMADDR_CID_ANY;
 
     // Start === Dynamic Loading CUDA Driver API
     void *handle;
