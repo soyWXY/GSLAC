@@ -10,12 +10,13 @@ NVCCFLAGS := -ptx
 
 CLEAN_LIST := *.out *.so *.ptx
 
+TEST   := vectorAdd.out
 CLIENT := client.out
 SERVER := server.out
 KERNEL := vectorAdd_kernel.cu
-PTX := vectorAdd_kernel.ptx
-SRC := vectorAdd.cpp
-SO := libmycudadrv.so
+PTX    := vectorAdd_kernel.ptx
+SRC    := vectorAdd.cpp
+SO     := libmycudadrv.so
 
 $(CLIENT): $(SRC) $(SO) $(PTX)
 	$(CXX) $(INC) -L. -o $(CLIENT) $(SRC) -lmycudadrv 
@@ -28,12 +29,19 @@ $(PTX): $(KERNEL)
 $(SERVER): gpu-vm.cpp
 	$(CXX) $(INC) -o $(SERVER) gpu-vm.cpp -ldl
 
+$(TEST): $(SRC) $(PTX)
+	$(CXX) $(INC) $(LIB) -o $(TEST) $(SRC) $(LDFLAGS)
+
 # default rule
 default: all
 
 # phony rules
 .PHONY: all
 all: client server
+
+# phony rules
+.PHONY: test
+test: $(TEST)
 
 .PHONY: client
 client: $(CLIENT)

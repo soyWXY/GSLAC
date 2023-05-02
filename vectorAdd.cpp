@@ -67,8 +67,15 @@ void RandomInit(float *, int);
 
 int main(int argc, char **argv)
 {
+    int N;
+    if (argc < 2) {
+        N = 500;
+    } else {
+        N = atoi(argv[1]);
+    }
+
     printf("Vector Addition (Driver API)\n");
-    int N = 50000;
+    
     size_t  size = N * sizeof(float);
     unsigned int api_version;
 
@@ -76,8 +83,8 @@ int main(int argc, char **argv)
     checkCudaErrors(cuInit(0));
     checkCudaErrors(cuDeviceGet(&cuDevice, 0)); // pick first device
     checkCudaErrors(cuCtxCreate(&cuContext, 0, cuDevice));
-    checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
-    printf("Client: API version: %u\n", api_version);
+    // checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
+    // printf("Client: API version: %u\n", api_version);
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
 
@@ -115,12 +122,17 @@ int main(int argc, char **argv)
 
     // Verify result
     int i;
+    int success = true;
 
     for (i = 0; i < 10; ++i)
     {
         float sum = h_A[i] + h_B[i];
-        std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
+        if (sum != h_C[i])
+            success = false;
+        // std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
     }
+
+    std::cout << (success ? "Pass!" : "Fail") << std::endl;
 
     return CleanupNoFailure();
 }
@@ -148,7 +160,7 @@ int CleanupNoFailure()
         free(h_C);
     }
 
-    // checkCudaErrors(cuCtxDestroy(cuContext));
+    checkCudaErrors(cuCtxDestroy(cuContext));
 
     return EXIT_SUCCESS;
 }
