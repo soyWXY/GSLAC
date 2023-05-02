@@ -7,21 +7,34 @@
 #include <cuda.h>
 
 // includes, CUDA
-#include <builtin_types.h>
+// #include <builtin_types.h>
 
 using namespace std;
 
+// #ifndef checkCudaErrors
+// #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+// // These are the inline versions for all of the SDK helper functions
+// inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
+//   if (CUDA_SUCCESS != err) {
+//     const char *errorStr = NULL;
+//     cuGetErrorString(err, &errorStr);
+//     fprintf(stderr,
+//             "checkCudaErrors() Driver API error = %04d \"%s\" from file <%s>, "
+//             "line %i.\n",
+//             err, errorStr, file, line);
+//     exit(EXIT_FAILURE);
+//   }
+// }
+// #endif
+
 #ifndef checkCudaErrors
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-// These are the inline versions for all of the SDK helper functions
 inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
-  if (CUDA_SUCCESS != err) {
-    const char *errorStr = NULL;
-    cuGetErrorString(err, &errorStr);
+if (0 != err) {
     fprintf(stderr,
-            "checkCudaErrors() Driver API error = %04d \"%s\" from file <%s>, "
+            "checkCudaErrors() Driver API error = %04d from file <%s>, "
             "line %i.\n",
-            err, errorStr, file, line);
+            err, file, line);
     exit(EXIT_FAILURE);
   }
 }
@@ -42,22 +55,30 @@ CUdeviceptr d_C;
 int CleanupNoFailure();
 void RandomInit(float *, int);
 
-//define input fatbin file
-#ifndef FATBIN_FILE
-#define FATBIN_FILE "vectorAdd_kernel.ptx"
+//define input ptx file
+#ifndef PTX_FILE
+#define PTX_FILE "vectorAdd_kernel.ptx"
+#endif
+
+//define kernel function file
+#ifndef PTX_FILE
+#define PTX_FILE "vectorAdd_kernel.ptx"
 #endif
 
 int main(int argc, char **argv)
 {
     printf("Vector Addition (Driver API)\n");
-    int N = 50000, devID = 0;
+    int N = 50000;
     size_t  size = N * sizeof(float);
+    unsigned int api_version;
 
     // create CUDA device & context, and load the kernel
     checkCudaErrors(cuInit(0));
     checkCudaErrors(cuDeviceGet(&cuDevice, 0)); // pick first device
     checkCudaErrors(cuCtxCreate(&cuContext, 0, cuDevice));
-    checkCudaErrors(cuModuleLoad(&cuModule, FATBIN_FILE));
+    checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
+    printf("Client: API version: %u\n", api_version);
+    checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
 
     // allocate host vectors
@@ -70,13 +91,10 @@ int main(int argc, char **argv)
     RandomInit(h_B, N);
     // Allocate vectors in device memory
     checkCudaErrors(cuMemAlloc(&d_A, size));
-
     checkCudaErrors(cuMemAlloc(&d_B, size));
-
     checkCudaErrors(cuMemAlloc(&d_C, size));
     // Copy vectors from host memory to device memory
     checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
-
     checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
 
     int threadsPerBlock = 256;
@@ -101,16 +119,10 @@ int main(int argc, char **argv)
     for (i = 0; i < 10; ++i)
     {
         float sum = h_A[i] + h_B[i];
-
-        printf("h_A: %f + h_b: %f = sum: %f (h_C = %f)\n", h_A[i], h_B[i], sum, h_C[i]);
-
-        // if (fabs(h_C[i] - sum) > 1e-7f)
-        // {
-        //     break;
-        // }
+        std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
     }
 
-    return 0;
+    return CleanupNoFailure();
 }
 
 int CleanupNoFailure()
@@ -136,7 +148,7 @@ int CleanupNoFailure()
         free(h_C);
     }
 
-    checkCudaErrors(cuCtxDestroy(cuContext));
+    // checkCudaErrors(cuCtxDestroy(cuContext));
 
     return EXIT_SUCCESS;
 }

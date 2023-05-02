@@ -8,31 +8,38 @@ LDFLAGS := -lcuda -lcudart
 NVCC := nvcc
 NVCCFLAGS := -ptx
 
-# path macros
-# BIN_PATH := bin
-# OBJ_PATH := obj
-# SRC_PATH := src
+CLEAN_LIST := *.out *.so *.ptx
 
-CLEAN_LIST := vectorAdd.out vectorAdd_kernel.ptx
-
-TARGET_NAME := vectorAdd.out
-
-TARGET := $(TARGET_NAME)
-KERNEL_SRC := vectorAdd_kernel.cu
+CLIENT := client.out
+SERVER := server.out
+KERNEL := vectorAdd_kernel.cu
 PTX := vectorAdd_kernel.ptx
 SRC := vectorAdd.cpp
+SO := libmycudadrv.so
 
-$(TARGET): $(SRC) $(PTX)
-	$(CXX) $(CXXFLAGS) -o vectorAdd.out $(INC) $(LIB) $(SRC) $(LDFLAGS)
-$(PTX): $(KERNEL_SRC)
-	$(NVCC) $(NVCCFLAGS) $(KERNEL_SRC)
+$(CLIENT): $(SRC) $(SO) $(PTX)
+	$(CXX) $(INC) -L. -o $(CLIENT) $(SRC) -lmycudadrv 
+$(SO): mycudadrv.cpp
+	$(CXX) -shared -fPIC $(INC) -o $(SO) mycudadrv.cpp -ldl
+
+$(PTX): $(KERNEL)
+	$(NVCC) $(NVCCFLAGS) $(KERNEL)
+
+$(SERVER): gpu-vm.cpp
+	$(CXX) $(INC) -o $(SERVER) gpu-vm.cpp -ldl
 
 # default rule
 default: all
 
 # phony rules
 .PHONY: all
-all: $(TARGET)
+all: client server
+
+.PHONY: client
+client: $(CLIENT)
+
+.PHONY: server
+server: $(SERVER)
 
 .PHONY: clean
 clean:
