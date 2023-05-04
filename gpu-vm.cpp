@@ -22,7 +22,14 @@ CUdeviceptr d_A = 0;
 CUdeviceptr d_B = 0;
 CUdeviceptr d_C = 0;
 
-int main(){
+int main(int argc, char **argv)
+{
+    int N;
+    if (argc < 2) {
+        N = 50000;
+    } else {
+        N = atoi(argv[1]);
+    }
 
     int serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
     struct sockaddr_vm serv_addr;
@@ -52,7 +59,6 @@ int main(){
     // End === Dynamic Loading CUDA Driver API
 
     // Start === Initialize local variable
-    int N = 50000;
     size_t  size = N * sizeof(float);
 
     // allocate host vectors
