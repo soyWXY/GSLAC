@@ -10,7 +10,8 @@ NVCCFLAGS := -ptx
 
 CLEAN_LIST := *.out *.so *.ptx
 
-TEST   := vectorAdd.out
+VEC    := vectorAdd.out
+MAT    := matrixMul.out
 CLIENT := client.out
 SERVER := server.out
 KERNEL := vectorAdd_kernel.cu
@@ -29,8 +30,11 @@ $(PTX): $(KERNEL)
 $(SERVER): gpu-vm.cpp
 	$(CXX) $(INC) -o $(SERVER) gpu-vm.cpp -ldl
 
-$(TEST): $(SRC) $(PTX)
-	$(CXX) $(INC) $(LIB) -o $(TEST) $(SRC) $(LDFLAGS)
+$(VEC): $(SRC) $(PTX)
+	$(CXX) $(INC) $(LIB) -o $(VEC) $(SRC) $(LDFLAGS)
+
+$(MAT): $(SRC) $(PTX)
+	$(CXX) $(INC) $(LIB) -o $(MAT) matrixMul.cpp $(LDFLAGS)
 
 # default rule
 default: all
@@ -39,15 +43,21 @@ default: all
 .PHONY: all
 all: client server
 
-# phony rules
-.PHONY: test
-test: $(TEST)
-
 .PHONY: client
 client: $(CLIENT)
 
 .PHONY: server
 server: $(SERVER)
+
+# phony rules
+.PHONY: test
+test: vector matrix
+
+.PHONY: vector
+vector: $(VEC)
+
+.PHONY: matrix
+matrix: $(MAT)
 
 .PHONY: clean
 clean:
