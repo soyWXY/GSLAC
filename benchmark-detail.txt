@@ -74,5 +74,3 @@ sys	0m0.006s
 real	0m1.055s
 user	0m0.707s
 sys	0m0.135s
-
-N = 500000000
