@@ -347,7 +347,11 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
     send(sock, com, sizeof(com), 0);
 
     send(sock, &gridDimX, sizeof(unsigned int), 0);
+    send(sock, &gridDimY, sizeof(unsigned int), 0);
+    send(sock, &gridDimZ, sizeof(unsigned int), 0);
     send(sock, &blockDimX, sizeof(unsigned int), 0);
+    send(sock, &blockDimY, sizeof(unsigned int), 0);
+    send(sock, &blockDimZ, sizeof(unsigned int), 0);
 
     CUresult err;
     recv(sock, &err, sizeof(CUresult), 0);

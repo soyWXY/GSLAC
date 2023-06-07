@@ -210,18 +210,24 @@ int main(int argc, char **argv)
         } else if (strcmp(buf, "1001") == 0) {
             std::cout << "1001: cuLaunchKernel" << std::endl;
 
-            void *args[] = { &d_A, &d_B, &d_C, &N };
+            // void *args[] = { &d_A, &d_B, &d_C, &N };
+            int width = sqrt(N);
+            void *args[] = { &d_A, &d_B, &d_C, &width, &width };
 
             cuLaunchKernel = reinterpret_cast<CUresult(*)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**)>(dlsym(handle, "cuLaunchKernel"));
 
-            unsigned int blocksPerGrid, threadsPerBlock;
+            unsigned int gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ;
 
-            recv(clnt_sock, &blocksPerGrid, sizeof(unsigned int), 0);
-            recv(clnt_sock, &threadsPerBlock, sizeof(unsigned int), 0);
+            recv(clnt_sock, &gridDimX, sizeof(unsigned int), 0);
+            recv(clnt_sock, &gridDimY, sizeof(unsigned int), 0);
+            recv(clnt_sock, &gridDimZ, sizeof(unsigned int), 0);
+            recv(clnt_sock, &blockDimX, sizeof(unsigned int), 0);
+            recv(clnt_sock, &blockDimY, sizeof(unsigned int), 0);
+            recv(clnt_sock, &blockDimZ, sizeof(unsigned int), 0);
 
             CUresult err;
-            err = cuLaunchKernel(vecAdd_kernel, blocksPerGrid, 1, 1,
-                                threadsPerBlock, 1, 1,
+            err = cuLaunchKernel(vecAdd_kernel, gridDimX, gridDimY, gridDimZ,
+                                blockDimX, blockDimY, blockDimZ,
                                 0,
                                 NULL, args, NULL);
             send(clnt_sock, &err, sizeof(CUresult), 0);

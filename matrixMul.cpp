@@ -42,12 +42,12 @@ if (0 != err) {
 
 // Matrix dimensions
 // (chosen as multiples of the thread block size for simplicity)
-#define WA (4 * block_size)  // Matrix A width
-#define HA (6 * block_size)  // Matrix A height
-#define WB (4 * block_size)  // Matrix B width
-#define HB WA                // Matrix B height
-#define WC WB                // Matrix C width
-#define HC HA                // Matrix C height
+//#define WA (4 * block_size)  // Matrix A width
+//#define HA (6 * block_size)  // Matrix A height
+//#define WB (4 * block_size)  // Matrix B width
+//#define HB WA                // Matrix B height
+//#define WC WB                // Matrix C width
+//#define HC HA                // Matrix C height
 
 // Variables
 CUdevice cuDevice;
@@ -72,16 +72,19 @@ void constantInit(float *data, int size, float val);
 
 int main(int argc, char **argv)
 {
-    int WA, HA, WB;
+    int WA, HA, WB, HB, WC, HC;
     if (argc < 4) {
-        WA = 250;
-        HA = 250;
-        WB = 250;
+        WA = 320;
+        HA = 320;
+        WB = 320;
     } else {
-        WA = atoi(argv[1];
-        HA = atoi(argv[2];
-        WB = atoi(argv[3];
+        WA = atoi(argv[1]);
+        HA = atoi(argv[2]);
+        WB = atoi(argv[3]);
     }
+    HB = WA;
+    WC = WB;
+    HC = HA;
     int block_size = 32;
     printf("Matrix Multiplication (Driver API)\n");
 
@@ -92,7 +95,7 @@ int main(int argc, char **argv)
     // checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
     // printf("Client: API version: %u\n", api_version);
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
-    checkCudaErrors(cuModuleGetFunction(&cuFunction, cuModule, "matrixMul_bs32_64bit"));
+    checkCudaErrors(cuModuleGetFunction(&cuFunction, cuModule, "MatMul_kernel"));
 
     // allocate host memory for matrices A and B
     unsigned int size_A = WA * HA;
@@ -125,7 +128,7 @@ int main(int argc, char **argv)
     size_t Matrix_Width_A = (size_t)WA;
     size_t Matrix_Width_B = (size_t)WB;
 
-    void *args[5] = {&d_C, &d_A, &d_B, &Matrix_Width_A, &Matrix_Width_B};
+    void *args[5] = {&d_A, &d_B, &d_C, &Matrix_Width_A, &Matrix_Width_B};
     
     // Launch the CUDA kernel
     checkCudaErrors(cuLaunchKernel(cuFunction, (WC / block_size), (HC / block_size), 1,
@@ -144,8 +147,7 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < static_cast<int>(WC * HC); i++) {
         if (fabs(h_C[i] - (WA * valB)) > 1e-5) {
-        printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > 1e-5\n", i,
-                h_C[i], WA * valB);
+        // printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > 1e-5\n", i, h_C[i], WA * valB);
         correct = false;
         }
     }

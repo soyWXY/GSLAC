@@ -26,7 +26,7 @@
 //! wA is A's width and wB is B's width
 ////////////////////////////////////////////////////////////////////////////////
 template <int block_size, typename size_type>
-__device__ void matrixMul(float *C, float *A, float *B, size_type wA,
+__device__ void matrixMul(float *A, float *B, float *C, size_type wA,
                           size_type wB) {
   // Block index
   size_type bx = blockIdx.x;
