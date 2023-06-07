@@ -72,6 +72,16 @@ void constantInit(float *data, int size, float val);
 
 int main(int argc, char **argv)
 {
+    int WA, HA, WB;
+    if (argc < 4) {
+        WA = 250;
+        HA = 250;
+        WB = 250;
+    } else {
+        WA = atoi(argv[1];
+        HA = atoi(argv[2];
+        WB = atoi(argv[3];
+    }
     int block_size = 32;
     printf("Matrix Multiplication (Driver API)\n");
 
