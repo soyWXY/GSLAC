@@ -6,6 +6,9 @@
 #include <cstring>
 #include <cuda.h>
 
+#include <chrono>
+#include <ctime>
+
 // includes, CUDA
 // #include <builtin_types.h>
 
@@ -65,6 +68,9 @@ int CleanupNoFailure();
 void RandomInit(float *, int);
 void constantInit(float *data, int size, float val);
 
+std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
+
 //define input ptx file
 #ifndef PTX_FILE
 #define PTX_FILE "matrixMul_kernel.ptx"
@@ -72,6 +78,7 @@ void constantInit(float *data, int size, float val);
 
 int main(int argc, char **argv)
 {
+    // total_start = std::chrono::system_clock::now();
     int WA, HA, WB, HB, WC, HC;
     if (argc < 4) {
         WA = 320;
@@ -85,7 +92,7 @@ int main(int argc, char **argv)
     HB = WA;
     WC = WB;
     HC = HA;
-    int block_size = 32;
+    int block_size = 16;
     printf("Matrix Multiplication (Driver API)\n");
 
     // create CUDA device & context, and load the kernel
@@ -96,6 +103,14 @@ int main(int argc, char **argv)
     // printf("Client: API version: %u\n", api_version);
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&cuFunction, cuModule, "MatMul_kernel"));
+
+    /*
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
+    */
+
+    total_start = std::chrono::system_clock::now();
 
     // allocate host memory for matrices A and B
     unsigned int size_A = WA * HA;
@@ -133,10 +148,19 @@ int main(int argc, char **argv)
     // Launch the CUDA kernel
     checkCudaErrors(cuLaunchKernel(cuFunction, (WC / block_size), (HC / block_size), 1,
                             block_size, block_size, 1,
-                            2 * block_size * block_size * sizeof(float),
+                            0,
                             NULL, args, NULL));
 
+    
+    // sync_start = std::chrono::system_clock::now();
+    
     checkCudaErrors(cuCtxSynchronize());
+
+    /*
+    sync_end = std::chrono::system_clock::now();
+    sync_elapsed_seconds = sync_end-sync_start;
+    std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
+    */
 
     // copy the result from device back to host
     checkCudaErrors(cuMemcpyDtoH(h_C, d_C, mem_size_C));
@@ -152,7 +176,25 @@ int main(int argc, char **argv)
         }
     }
 
+    /*    
+    printf("\n");
+    for (int i = 0; i < 5; i++) {
+	    for (int j = 0; j < 5; j++) {
+		    printf("%f ", h_C[i*128+j]);
+	    }
+	    printf("\n");
+    }
+    */
+    
+    
+
     printf("%s\n", correct ? "Result = PASS" : "Result = FAIL");
+
+    /*
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
+    */
 
     return CleanupNoFailure();
 }
@@ -181,6 +223,10 @@ int CleanupNoFailure()
     }
 
     checkCudaErrors(cuCtxDestroy(cuContext));
+
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
 
     return EXIT_SUCCESS;
 }

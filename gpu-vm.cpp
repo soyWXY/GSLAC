@@ -8,6 +8,11 @@
 #include <linux/vm_sockets.h>
 #include <netinet/in.h>
 
+#include <math.h>
+
+#include <chrono>
+#include <ctime>
+
 #include <dlfcn.h>
 #include <cuda.h>
 
@@ -21,6 +26,9 @@ float *h_C;
 CUdeviceptr d_A = 0;
 CUdeviceptr d_B = 0;
 CUdeviceptr d_C = 0;
+
+std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
 
 int main(int argc, char **argv)
 {
@@ -61,10 +69,14 @@ int main(int argc, char **argv)
     // Start === Initialize local variable
     size_t  size = N * sizeof(float);
 
+    int width = sqrt(N);
     // allocate host vectors
     h_A = (float *)malloc(size);
     h_B = (float *)malloc(size);
     h_C = (float *)malloc(size);
+    memset(h_A, 0, N*sizeof(float));
+    memset(h_B, 0, N*sizeof(float));
+    memset(h_C, 0, N*sizeof(float));
     // End === Initialize local variable
 
     bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
@@ -82,6 +94,7 @@ int main(int argc, char **argv)
 
         if (strcmp(buf, "0001") == 0) {
             std::cout << "0001: cuInit" << std::endl;
+	    total_start = std::chrono::system_clock::now();
             
             unsigned int flags = -1;
             recv(clnt_sock, &flags, sizeof(unsigned int), 0);
@@ -145,7 +158,8 @@ int main(int argc, char **argv)
             std::cout << "Receive fname: " << fname << std::endl;
             
             CUresult err;
-            err = cuModuleLoad(&cuModule, "vectorAdd_kernel.ptx");
+            // err = cuModuleLoad(&cuModule, "vectorAdd_kernel.ptx");
+            err = cuModuleLoad(&cuModule, "matrixMul_kernel.ptx");
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
@@ -155,7 +169,13 @@ int main(int argc, char **argv)
             cuModuleGetFunction = reinterpret_cast<CUresult(*)(CUfunction*, CUmodule, const char*)>(dlsym(handle, "cuModuleGetFunction"));
 	
             CUresult err;
-            err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel");
+            // err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel");
+            err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "MatMul_kernel");
+
+	    total_end = std::chrono::system_clock::now();
+            total_elapsed_seconds = total_end-total_start;
+
+            std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
@@ -200,10 +220,42 @@ int main(int argc, char **argv)
             if (dptr == d_A) {
                 recv(clnt_sock, h_A, ByteCount, 0);
                 err = cuMemcpyHtoD(d_A, h_A, ByteCount);
+
+		/*
+		for (int i = 0; i < 5; i++) {
+            		for (int j = 0; j < 5; j++) {
+                    		printf("%f ", h_A[i*width+j]);
+            		}
+            		printf("\n");
+    		}
+		*/
+
+		/*
+		for (int i = 0; i < 5; i++) {
+                    printf("%f ", h_A[i]);
+                }
+		*/
+
             } else if (dptr == d_B) {
                 recv(clnt_sock, h_B, ByteCount, 0);
                 err = cuMemcpyHtoD(d_B, h_B, ByteCount);
-            }
+           
+	       	/*
+	    	for (int i = 0; i < 5; i++) {
+                        for (int j = 0; j < 5; j++) {
+                                printf("%f ", h_B[i*width+j]);
+                        }
+                        printf("\n");
+                }
+		*/
+
+		/*
+		for (int i = 0; i < 5; i++) {
+                    printf("%f ", h_B[i]);
+                }
+		*/
+	    
+	    }
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
@@ -211,7 +263,6 @@ int main(int argc, char **argv)
             std::cout << "1001: cuLaunchKernel" << std::endl;
 
             // void *args[] = { &d_A, &d_B, &d_C, &N };
-            int width = sqrt(N);
             void *args[] = { &d_A, &d_B, &d_C, &width, &width };
 
             cuLaunchKernel = reinterpret_cast<CUresult(*)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**)>(dlsym(handle, "cuLaunchKernel"));
@@ -238,7 +289,15 @@ int main(int argc, char **argv)
             cuCtxSynchronize = reinterpret_cast<CUresult(*)()>(dlsym(handle, "cuCtxSynchronize"));
 	
             CUresult err;
+
+	    sync_start = std::chrono::system_clock::now();
+
             err = cuCtxSynchronize();
+
+	    sync_end = std::chrono::system_clock::now();
+
+            std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
+
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
         } else if (strcmp(buf, "1011") == 0) {
@@ -252,6 +311,21 @@ int main(int argc, char **argv)
 
             CUresult err;
             err = cuMemcpyDtoH(h_C, d_C, ByteCount);
+
+	    /*
+	    for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    printf("%f ", h_C[i*width+j]);
+                }
+                printf("\n");
+            }
+	    */
+
+	    /*
+	    for (int i = 0; i < 5; i++) {
+                printf("%f ", h_C[i]);
+            }
+	    */
 
             send(clnt_sock, h_C, ByteCount, 0);
 
@@ -283,9 +357,16 @@ int main(int argc, char **argv)
 	
             CUresult err;
             err = cuCtxDestroy(cuContext);
+	    memset(h_A, 0, N*sizeof(float));
+	    memset(h_B, 0, N*sizeof(float));
+	    memset(h_C, 0, N*sizeof(float));
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
+	    total_end = std::chrono::system_clock::now();
+	    total_elapsed_seconds = total_end-total_start;
+
+	    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
         } else {
             printf("Exception\n");
         }

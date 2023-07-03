@@ -6,6 +6,9 @@
 #include <cstring>
 #include <cuda.h>
 
+#include <chrono>
+#include <ctime>
+
 // includes, CUDA
 // #include <builtin_types.h>
 
@@ -55,6 +58,9 @@ CUdeviceptr d_C;
 int CleanupNoFailure();
 void RandomInit(float *, int);
 
+std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
+
 //define input ptx file
 #ifndef PTX_FILE
 #define PTX_FILE "vectorAdd_kernel.ptx"
@@ -67,6 +73,7 @@ void RandomInit(float *, int);
 
 int main(int argc, char **argv)
 {
+    // sync_start = std::chrono::system_clock::now();
     int N;
     if (argc < 2) {
         N = 500;
@@ -87,6 +94,14 @@ int main(int argc, char **argv)
     // printf("Client: API version: %u\n", api_version);
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
+
+    /*
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
+    */
+
+    total_start = std::chrono::system_clock::now();
 
     // allocate host vectors
     h_A = (float *)malloc(size);
@@ -115,7 +130,16 @@ int main(int argc, char **argv)
                                0,
                                NULL, args, NULL));
 
+    // sync_start = std::chrono::system_clock::now();
+    
     checkCudaErrors(cuCtxSynchronize());
+
+    /*
+    sync_end = std::chrono::system_clock::now();
+    sync_elapsed_seconds = sync_end-sync_start;
+
+    std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
+    */
 
     // copy the result from device back to host
     checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
@@ -133,6 +157,13 @@ int main(int argc, char **argv)
     }
 
     std::cout << (success ? "Pass!" : "Fail") << std::endl;
+
+    /*
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
+    */
+
 
     return CleanupNoFailure();
 }
@@ -161,6 +192,10 @@ int CleanupNoFailure()
     }
 
     checkCudaErrors(cuCtxDestroy(cuContext));
+
+    total_end = std::chrono::system_clock::now();
+    total_elapsed_seconds = total_end-total_start;
+    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
 
     return EXIT_SUCCESS;
 }
