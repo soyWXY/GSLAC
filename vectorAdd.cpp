@@ -58,8 +58,8 @@ CUdeviceptr d_C;
 int CleanupNoFailure();
 void RandomInit(float *, int);
 
-std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
-std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
@@ -73,7 +73,7 @@ std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
 
 int main(int argc, char **argv)
 {
-    // sync_start = std::chrono::system_clock::now();
+    init_start = std::chrono::system_clock::now();
     int N;
     if (argc < 2) {
         N = 500;
@@ -95,12 +95,9 @@ int main(int argc, char **argv)
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
 
-    /*
-    total_end = std::chrono::system_clock::now();
-    total_elapsed_seconds = total_end-total_start;
-    std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
-    */
-
+    init_end = std::chrono::system_clock::now();
+    init_elapsed_seconds = init_end-init_start;
+    std::cout << "init elapsed time: " << init_elapsed_seconds.count() << "s" << std::endl;
     total_start = std::chrono::system_clock::now();
 
     // allocate host vectors
@@ -148,7 +145,7 @@ int main(int argc, char **argv)
     int i;
     int success = true;
 
-    for (i = 0; i < 10; ++i)
+    for (i = 0; i < N; ++i)
     {
         float sum = h_A[i] + h_B[i];
         if (sum != h_C[i])
@@ -158,19 +155,11 @@ int main(int argc, char **argv)
 
     std::cout << (success ? "Pass!" : "Fail") << std::endl;
 
-    /*
-    total_end = std::chrono::system_clock::now();
-    total_elapsed_seconds = total_end-total_start;
-    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
-    */
-
-
     return CleanupNoFailure();
 }
 
 int CleanupNoFailure()
 {
-    // Free device memory
     checkCudaErrors(cuMemFree(d_A));
     checkCudaErrors(cuMemFree(d_B));
     checkCudaErrors(cuMemFree(d_C));

@@ -68,8 +68,8 @@ int CleanupNoFailure();
 void RandomInit(float *, int);
 void constantInit(float *data, int size, float val);
 
-std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
-std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
@@ -78,21 +78,16 @@ std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
 
 int main(int argc, char **argv)
 {
-    // total_start = std::chrono::system_clock::now();
+    init_start = std::chrono::system_clock::now();
     int WA, HA, WB, HB, WC, HC;
-    if (argc < 4) {
-        WA = 320;
-        HA = 320;
-        WB = 320;
-    } else {
-        WA = atoi(argv[1]);
-        HA = atoi(argv[2]);
-        WB = atoi(argv[3]);
-    }
+
+    WA = atoi(argv[1]);
+    HA = atoi(argv[2]);
+    WB = atoi(argv[3]);
     HB = WA;
     WC = WB;
     HC = HA;
-    int block_size = 16;
+    unsigned int block_size = 32;
     printf("Matrix Multiplication (Driver API)\n");
 
     // create CUDA device & context, and load the kernel
@@ -104,32 +99,30 @@ int main(int argc, char **argv)
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(cuModuleGetFunction(&cuFunction, cuModule, "MatMul_kernel"));
 
-    /*
-    total_end = std::chrono::system_clock::now();
-    total_elapsed_seconds = total_end-total_start;
-    std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
-    */
+    init_end = std::chrono::system_clock::now();
+    init_elapsed_seconds = init_end-init_start;
+    std::cout << "init elapsed time: " << init_elapsed_seconds.count() << "s" << std::endl;
 
     total_start = std::chrono::system_clock::now();
 
     // allocate host memory for matrices A and B
     unsigned int size_A = WA * HA;
-    unsigned int mem_size_A = sizeof(float) * size_A;
-    h_A = reinterpret_cast<float *>(malloc(mem_size_A));
+    size_t mem_size_A = sizeof(float) * size_A;
+    h_A = (float *)malloc(mem_size_A);
     unsigned int size_B = WB * HB;
-    unsigned int mem_size_B = sizeof(float) * size_B;
-    h_B = reinterpret_cast<float *>(malloc(mem_size_B));
+    size_t mem_size_B = sizeof(float) * size_B;
+    h_B = (float *)malloc(mem_size_B);
 
     // initialize host memory
-    const float valB = 0.01f;
+    const float valB = 0.001f;
     constantInit(h_A, size_A, 1.0f);
     constantInit(h_B, size_B, valB);
 
     // allocate device memory for result
-    size_t size_C = WC * HC;
+    unsigned int size_C = WC * HC;
     size_t mem_size_C = sizeof(float) * size_C;
     // allocate mem for the result on host side
-    h_C = reinterpret_cast<float *>(malloc(mem_size_C));
+    h_C = (float *)malloc(mem_size_C);
 
     // allocate device memory
     checkCudaErrors(cuMemAlloc(&d_A, mem_size_A));
@@ -140,27 +133,19 @@ int main(int argc, char **argv)
     checkCudaErrors(cuMemcpyHtoD(d_A, h_A, mem_size_A));
     checkCudaErrors(cuMemcpyHtoD(d_B, h_B, mem_size_B));
 
-    size_t Matrix_Width_A = (size_t)WA;
-    size_t Matrix_Width_B = (size_t)WB;
+    void *args[5] = {&d_A, &d_B, &d_C, &WA, &WB};
 
-    void *args[5] = {&d_A, &d_B, &d_C, &Matrix_Width_A, &Matrix_Width_B};
+    unsigned int gridDimX = (WA + block_size - 1) / block_size;
+    unsigned int gridDimY = (WB + block_size - 1) / block_size;;
     
     // Launch the CUDA kernel
-    checkCudaErrors(cuLaunchKernel(cuFunction, (WC / block_size), (HC / block_size), 1,
+    checkCudaErrors(cuLaunchKernel(cuFunction, gridDimX, gridDimY, 1,
                             block_size, block_size, 1,
                             0,
                             NULL, args, NULL));
 
     
-    // sync_start = std::chrono::system_clock::now();
-    
     checkCudaErrors(cuCtxSynchronize());
-
-    /*
-    sync_end = std::chrono::system_clock::now();
-    sync_elapsed_seconds = sync_end-sync_start;
-    std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
-    */
 
     // copy the result from device back to host
     checkCudaErrors(cuMemcpyDtoH(h_C, d_C, mem_size_C));
@@ -176,25 +161,22 @@ int main(int argc, char **argv)
         }
     }
 
-    /*    
+    
     printf("\n");
-    for (int i = 0; i < 5; i++) {
-	    for (int j = 0; j < 5; j++) {
-		    printf("%f ", h_C[i*128+j]);
-	    }
-	    printf("\n");
+    // for (int i = 1; i < 5; i++) {
+	//     for (int j = 0; j < 5; j++) {
+	// 	    printf("%f ", h_C[i*WA+j]);
+	//     }
+	//     printf("\n");
+    // }
+    for (int i = WA*WA-1; i >= WA*WA-5; i--) {
+        printf("%f ", h_C[i]);
     }
-    */
+    printf("\n");
     
     
 
     printf("%s\n", correct ? "Result = PASS" : "Result = FAIL");
-
-    /*
-    total_end = std::chrono::system_clock::now();
-    total_elapsed_seconds = total_end-total_start;
-    std::cout << "total elapsed time: " << total_elapsed_seconds.count() << "s" << std::endl;
-    */
 
     return CleanupNoFailure();
 }

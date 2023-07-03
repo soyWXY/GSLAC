@@ -27,16 +27,16 @@ CUdeviceptr d_A = 0;
 CUdeviceptr d_B = 0;
 CUdeviceptr d_C = 0;
 
-std::chrono::high_resolution_clock::time_point sync_start, sync_end, total_start, total_end;
-std::chrono::duration<double> sync_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, sync_start, sync_end, zeroing_start, zeroing_end, transfer_start, transfer_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, sync_elapsed_seconds, zeroing_elapsed_seconds, transfer_elapsed_seconds, total_elapsed_seconds;
 
 int main(int argc, char **argv)
 {
     int N;
-    if (argc < 2) {
+    if (argc < 3) {
         N = 50000;
     } else {
-        N = atoi(argv[1]);
+        N = atoi(argv[2]);
     }
 
     int serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
@@ -56,6 +56,7 @@ int main(int argc, char **argv)
     CUresult (*cuModuleLoad)(CUmodule*, const char*);
     CUresult (*cuModuleGetFunction)(CUfunction*, CUmodule, const char*);
     CUresult (*cuMemAlloc)(CUdeviceptr*, size_t);
+    CUresult (*cuMemsetD32)(CUdeviceptr*, unsigned int, size_t);
     CUresult (*cuMemcpyHtoD)(CUdeviceptr, const void*, size_t);
     CUresult (*cuLaunchKernel)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**);
     CUresult (*cuCtxSynchronize)();
@@ -94,7 +95,7 @@ int main(int argc, char **argv)
 
         if (strcmp(buf, "0001") == 0) {
             std::cout << "0001: cuInit" << std::endl;
-	    total_start = std::chrono::system_clock::now();
+	        init_start = std::chrono::system_clock::now();
             
             unsigned int flags = -1;
             recv(clnt_sock, &flags, sizeof(unsigned int), 0);
@@ -158,8 +159,11 @@ int main(int argc, char **argv)
             std::cout << "Receive fname: " << fname << std::endl;
             
             CUresult err;
-            // err = cuModuleLoad(&cuModule, "vectorAdd_kernel.ptx");
-            err = cuModuleLoad(&cuModule, "matrixMul_kernel.ptx");
+            if (atoi(argv[1]) == 1)
+                err = cuModuleLoad(&cuModule, "vectorAdd_kernel.ptx");
+            
+            if (atoi(argv[1]) == 2)
+                err = cuModuleLoad(&cuModule, "matrixMul_kernel.ptx");
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
@@ -169,13 +173,15 @@ int main(int argc, char **argv)
             cuModuleGetFunction = reinterpret_cast<CUresult(*)(CUfunction*, CUmodule, const char*)>(dlsym(handle, "cuModuleGetFunction"));
 	
             CUresult err;
-            // err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel");
-            err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "MatMul_kernel");
+            if (atoi(argv[1]) == 1)
+                err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel");
+            
+            if (atoi(argv[1]) == 2)
+                err = cuModuleGetFunction(&vecAdd_kernel, cuModule, "MatMul_kernel");
 
-	    total_end = std::chrono::system_clock::now();
-            total_elapsed_seconds = total_end-total_start;
-
-            std::cout << "total elapsed time (after cuModuleGetFunction): " << total_elapsed_seconds.count() << "s" << std::endl;
+	        init_end = std::chrono::system_clock::now();
+            init_elapsed_seconds = init_end-init_start;
+            std::cout << "init elapsed time: " << init_elapsed_seconds.count() << "s" << std::endl;
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
 
@@ -183,23 +189,44 @@ int main(int argc, char **argv)
             std::cout << "0111: cuMemAlloc" << std::endl;
 
             cuMemAlloc = reinterpret_cast<CUresult(*)(CUdeviceptr*, size_t)>(dlsym(handle, "cuMemAlloc"));
+            cuMemsetD32 = reinterpret_cast<CUresult(*)(CUdeviceptr*, unsigned int, size_t)>(dlsym(handle, "cuMemsetD32"));
 
             size_t bytesize;
             recv(clnt_sock, &bytesize, sizeof(size_t), 0);
 
-            CUresult err;
+            CUresult err, err2;
             if (!d_A) {
                 err = cuMemAlloc(&d_A, bytesize);
                 std::cout << "d_A: " << d_A << std::endl;
                 send(clnt_sock, &d_A, sizeof(CUdeviceptr), 0);
+
+                zeroing_start = std::chrono::system_clock::now();
+                zeroing_elapsed_seconds = std::chrono::nanoseconds::zero();
+                err2 = cuMemsetD32(&d_A, 0, bytesize);
+                zeroing_end = std::chrono::system_clock::now();
+                zeroing_elapsed_seconds += zeroing_end - zeroing_start;
+
             } else if (!d_B) {
                 err = cuMemAlloc(&d_B, bytesize);
                 std::cout << "d_B: " << d_B << std::endl;
                 send(clnt_sock, &d_B, sizeof(CUdeviceptr), 0);
+
+                zeroing_start = std::chrono::system_clock::now();
+                err2 = cuMemsetD32(&d_B, 0, bytesize);
+                zeroing_end = std::chrono::system_clock::now();
+                zeroing_elapsed_seconds += zeroing_end - zeroing_start;
+
             } else if (!d_C) {
                 err = cuMemAlloc(&d_C, bytesize);
                 std::cout << "d_C: " << d_C << std::endl;
                 send(clnt_sock, &d_C, sizeof(CUdeviceptr), 0);
+
+                zeroing_start = std::chrono::system_clock::now();
+                err2 = cuMemsetD32(&d_C, 0, bytesize);
+                zeroing_end = std::chrono::system_clock::now();
+                zeroing_elapsed_seconds += zeroing_end - zeroing_start;
+                std::cout << "zeroing elapsed time: " << zeroing_elapsed_seconds.count() << "s" << std::endl;
+
             }
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
@@ -218,7 +245,13 @@ int main(int argc, char **argv)
             CUresult err;
 
             if (dptr == d_A) {
+
+                transfer_start = std::chrono::system_clock::now();
+                transfer_elapsed_seconds = std::chrono::nanoseconds::zero();
                 recv(clnt_sock, h_A, ByteCount, 0);
+                transfer_end = std::chrono::system_clock::now();
+                transfer_elapsed_seconds += transfer_end - transfer_start;
+                
                 err = cuMemcpyHtoD(d_A, h_A, ByteCount);
 
 		/*
@@ -229,15 +262,20 @@ int main(int argc, char **argv)
             		printf("\n");
     		}
 		*/
-
 		/*
-		for (int i = 0; i < 5; i++) {
-                    printf("%f ", h_A[i]);
-                }
+		for (int i = width-5; i < width+5; i++) {
+        	    printf("%f ", h_A[i]);
+    		}
+    		printf("\n");
 		*/
 
             } else if (dptr == d_B) {
+
+                transfer_start = std::chrono::system_clock::now();
                 recv(clnt_sock, h_B, ByteCount, 0);
+                transfer_end = std::chrono::system_clock::now();
+                transfer_elapsed_seconds += transfer_end - transfer_start;
+
                 err = cuMemcpyHtoD(d_B, h_B, ByteCount);
            
 	       	/*
@@ -247,14 +285,13 @@ int main(int argc, char **argv)
                         }
                         printf("\n");
                 }
-		*/
-
-		/*
-		for (int i = 0; i < 5; i++) {
+	        */	
+                /*
+		for (int i = width-5; i < width+5; i++) {
                     printf("%f ", h_B[i]);
                 }
-		*/
-	    
+                printf("\n");
+	        */
 	    }
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
@@ -262,8 +299,21 @@ int main(int argc, char **argv)
         } else if (strcmp(buf, "1001") == 0) {
             std::cout << "1001: cuLaunchKernel" << std::endl;
 
-            // void *args[] = { &d_A, &d_B, &d_C, &N };
-            void *args[] = { &d_A, &d_B, &d_C, &width, &width };
+	    /*
+	    void **args;
+            void *args1[] = { &d_A, &d_B, &d_C, &N };
+            void *args2[] = { &d_A, &d_B, &d_C, &width, &width };
+
+	    if (atoi(argv[1]) == 1)
+	        args = args1;
+
+	    if (atoi(argv[1]) == 2)
+	        args = args2;
+
+	    */
+	    void *args[] = { &d_A, &d_B, &d_C, &N };
+	    // void *args[] = { &d_A, &d_B, &d_C, &width, &width };
+
 
             cuLaunchKernel = reinterpret_cast<CUresult(*)(CUfunction, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, CUstream, void**, void**)>(dlsym(handle, "cuLaunchKernel"));
 
@@ -290,12 +340,12 @@ int main(int argc, char **argv)
 	
             CUresult err;
 
-	    sync_start = std::chrono::system_clock::now();
+	        sync_start = std::chrono::system_clock::now();
 
             err = cuCtxSynchronize();
 
-	    sync_end = std::chrono::system_clock::now();
-
+	        sync_end = std::chrono::system_clock::now();
+            sync_elapsed_seconds = sync_end - sync_start;
             std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
@@ -309,27 +359,34 @@ int main(int argc, char **argv)
 
             recv(clnt_sock, &ByteCount, sizeof(size_t), 0);
 
-            CUresult err;
+	    printf("ByteCount: %zu\n", ByteCount);
+
+            CUresult err = CUDA_SUCCESS;
             err = cuMemcpyDtoH(h_C, d_C, ByteCount);
 
-	    /*
-	    for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    printf("%f ", h_C[i*width+j]);
-                }
-                printf("\n");
-            }
-	    */
+	    printf("err: %u (Before send)\n", err);
 
-	    /*
-	    for (int i = 0; i < 5; i++) {
+	    for (int i = N-1; i >= N-5; i--) {
                 printf("%f ", h_C[i]);
             }
-	    */
-
+            printf("\n");
+	    
+	    
+            transfer_start = std::chrono::system_clock::now();
+            // send(clnt_sock, h_C, ByteCount, 0);
             send(clnt_sock, h_C, ByteCount, 0);
+	    transfer_end = std::chrono::system_clock::now();
+            transfer_elapsed_seconds += transfer_end - transfer_start;
+            std::cout << "transfer elapsed time: " << transfer_elapsed_seconds.count() << "s" << std::endl;
+           
+	    printf("err: %u (After send)\n", err);
 
-            send(clnt_sock, &err, sizeof(CUresult), 0);
+	    for (int i = N-1; i >= N-5; i--) {
+                printf("%f ", h_C[i]);
+            }
+            printf("\n");
+		
+	    send(clnt_sock, &err, sizeof(CUresult), 0);
 
         } else if (strcmp(buf, "1100") == 0) {
             std::cout << "1100: cuMemFree" << std::endl;
