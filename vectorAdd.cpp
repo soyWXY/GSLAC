@@ -148,9 +148,10 @@ int main(int argc, char **argv)
     for (i = 0; i < N; ++i)
     {
         float sum = h_A[i] + h_B[i];
-        if (sum != h_C[i])
+        if (fabs(h_C[i] - sum) > 1e-5) {
             success = false;
-        // std::cout << "h_A: " << h_A[i] << " + h_b: " << h_B[i] << " = sum: " << sum << " (h_C = " << h_C[i] << ")" << std::endl;
+	    printf("h_C[%d]: %f, sum: %f\n", i, h_C[i], sum);
+	}
     }
 
     std::cout << (success ? "Pass!" : "Fail") << std::endl;

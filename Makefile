@@ -12,29 +12,32 @@ CLEAN_LIST := *.out *.so *.ptx
 
 VEC    := vectorAdd.out
 MAT    := matrixMul.out
-CLIENT := client.out
 SERVER := server.out
-KERNEL := vectorAdd_kernel.cu
-PTX    := vectorAdd_kernel.ptx
-SRC    := vectorAdd.cpp
+VEC_KER:= vectorAdd_kernel.cu
+MAT_KER:= matrixMul_kernel.cu
+VEC_PTX:= vectorAdd_kernel.ptx
+MAT_PTX:= matrixMul_kernel.ptx
+VEC_SRC:= vectorAdd.cpp
+MAT_SRC:= matrixMul.cpp
 SO     := libmycudadrv.so
 
-$(CLIENT): $(SRC) $(SO) $(PTX)
-	$(CXX) $(INC) -L. -o $(CLIENT) $(SRC) -lmycudadrv 
+$(VEC): $(VEC_SRC) $(SO) $(VEC_PTX)
+	$(CXX) $(INC) -L. -o $(VEC) $(VEC_SRC) -lmycudadrv
+
+$(MAT): $(MAT_SRC) $(SO) $(MAT_PTX)
+	$(CXX) $(INC) -L. -o $(MAT) $(MAT_SRC) -lmycudadrv 
+
 $(SO): mycudadrv.cpp
 	$(CXX) -shared -fPIC $(INC) -o $(SO) mycudadrv.cpp -ldl
 
-$(PTX): $(KERNEL)
-	$(NVCC) $(NVCCFLAGS) $(KERNEL)
+$(VEC_PTX): $(VEC_KER)
+	$(NVCC) $(NVCCFLAGS) $(VEC_KER)
+
+$(MAT_PTX): $(MAT_KER)
+	$(NVCC) $(NVCCFLAGS) $(MAT_KER)
 
 $(SERVER): gpu-vm.cpp
 	$(CXX) $(INC) -o $(SERVER) gpu-vm.cpp -ldl
-
-$(VEC): $(SRC) $(PTX)
-	$(CXX) $(INC) $(LIB) -o $(VEC) $(SRC) $(LDFLAGS)
-
-$(MAT): $(SRC) $(PTX)
-	$(CXX) $(INC) $(LIB) -o $(MAT) matrixMul.cpp $(LDFLAGS)
 
 # default rule
 default: all
@@ -44,20 +47,10 @@ default: all
 all: client server
 
 .PHONY: client
-client: $(CLIENT)
+client: $(VEC) $(MAT)
 
 .PHONY: server
 server: $(SERVER)
-
-# phony rules
-.PHONY: test
-test: vector matrix
-
-.PHONY: vector
-vector: $(VEC)
-
-.PHONY: matrix
-matrix: $(MAT)
 
 .PHONY: clean
 clean:

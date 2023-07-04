@@ -39,7 +39,19 @@ int main(int argc, char **argv)
         N = atoi(argv[2]);
     }
 
-    int serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
+    
+    int rc, rb = -1;
+    int serv_sock, max_sd, clnt_sock;
+    struct timeval timeout;
+    // struct fd_set master_set, working_set;
+
+    serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
+    if (serv_sock < 0)
+    {
+      perror("socket() failed");
+      exit(-1);
+    }
+
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;  
@@ -80,13 +92,35 @@ int main(int argc, char **argv)
     memset(h_C, 0, N*sizeof(float));
     // End === Initialize local variable
 
-    bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    listen(serv_sock, 20);
+    rc = bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    if (rc < 0)
+    {
+      perror("bind() failed");
+      close(serv_sock);
+      exit(-1);
+    }
+
+    
+    rc = listen(serv_sock, 20);
+    if (rc < 0)
+    {
+      perror("listen() failed");
+      close(serv_sock);
+      exit(-1);
+    }
+
+    /*
+    FD_ZERO(&master_set);
+    max_sd = serv_sock;
+    FD_SET(serv_sock, &master_set);
+    */
+
+    timeout.tv_sec  = 60;
+    timeout.tv_usec = 0;
 
     struct sockaddr_in clnt_addr;
     socklen_t clnt_addr_size = sizeof(clnt_addr);
 
-    int clnt_sock;
     while((clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size)) > 0) {
         char buf[5] = {-1};
         size_t msg_len = recv(clnt_sock, &buf, sizeof(buf), 0);
@@ -248,7 +282,23 @@ int main(int argc, char **argv)
 
                 transfer_start = std::chrono::system_clock::now();
                 transfer_elapsed_seconds = std::chrono::nanoseconds::zero();
-                recv(clnt_sock, h_A, ByteCount, 0);
+                
+		rb = 0;
+    		size_t chunk = 128;
+    		int count = ByteCount / chunk;
+
+    		for (int i = 0; i < count; i++) {
+        	    rb += recv(clnt_sock, h_A+(i*32), chunk, 0);
+    		}
+    		std::cout << "Receive " << rb << " bytes" << std::endl;
+		
+		/*
+		rb = recv(clnt_sock, h_A, ByteCount, 0);
+		if (rb < 0) {
+                    perror("recv() failed");
+		    exit(-1);
+		}
+		*/
                 transfer_end = std::chrono::system_clock::now();
                 transfer_elapsed_seconds += transfer_end - transfer_start;
                 
@@ -262,17 +312,39 @@ int main(int argc, char **argv)
             		printf("\n");
     		}
 		*/
-		/*
-		for (int i = width-5; i < width+5; i++) {
-        	    printf("%f ", h_A[i]);
-    		}
-    		printf("\n");
-		*/
+
+		printf("ByteCount: %zu\n", ByteCount);
+		printf("Receive %d bytes\n", rb);
+
+		for (int i = 0; i < 5; i++) {
+                    printf("%f ", h_A[i]);
+                }
+                printf("\n");
+                for (int i = N-1; i >= N-5; i--) {
+                    printf("%f ", h_A[i]);
+                }
+                printf("\n");
 
             } else if (dptr == d_B) {
 
                 transfer_start = std::chrono::system_clock::now();
-                recv(clnt_sock, h_B, ByteCount, 0);
+                
+		rb = 0;
+                size_t chunk = 128;
+                int count = ByteCount / chunk;
+
+                for (int i = 0; i < count; i++) {
+                    rb += recv(clnt_sock, h_B+(i*32), chunk, 0);
+                }
+                std::cout << "Receive " << rb << " bytes" << std::endl;
+
+		/*
+		rb = recv(clnt_sock, h_B, ByteCount, 0);
+		if (rb < 0) {
+                    perror("recv() failed");
+                    exit(-1);
+                }
+		*/
                 transfer_end = std::chrono::system_clock::now();
                 transfer_elapsed_seconds += transfer_end - transfer_start;
 
@@ -286,12 +358,19 @@ int main(int argc, char **argv)
                         printf("\n");
                 }
 	        */	
-                /*
-		for (int i = width-5; i < width+5; i++) {
+
+		printf("ByteCount: %zu\n", ByteCount);
+		printf("Receive %d bytes\n", rb);
+                
+		for (int i = 0; i < 5; i++) {
                     printf("%f ", h_B[i]);
                 }
                 printf("\n");
-	        */
+		for (int i = N-1; i >= N-5; i--) {
+                    printf("%f ", h_B[i]);
+                }
+                printf("\n");
+	        
 	    }
 
             send(clnt_sock, &err, sizeof(CUresult), 0);
@@ -299,7 +378,7 @@ int main(int argc, char **argv)
         } else if (strcmp(buf, "1001") == 0) {
             std::cout << "1001: cuLaunchKernel" << std::endl;
 
-	    /*
+	    
 	    void **args;
             void *args1[] = { &d_A, &d_B, &d_C, &N };
             void *args2[] = { &d_A, &d_B, &d_C, &width, &width };
@@ -310,8 +389,8 @@ int main(int argc, char **argv)
 	    if (atoi(argv[1]) == 2)
 	        args = args2;
 
-	    */
-	    void *args[] = { &d_A, &d_B, &d_C, &N };
+	    
+	    // void *args[] = { &d_A, &d_B, &d_C, &N };
 	    // void *args[] = { &d_A, &d_B, &d_C, &width, &width };
 
 
@@ -361,30 +440,38 @@ int main(int argc, char **argv)
 
 	    printf("ByteCount: %zu\n", ByteCount);
 
-            CUresult err = CUDA_SUCCESS;
+            CUresult err;
             err = cuMemcpyDtoH(h_C, d_C, ByteCount);
 
 	    printf("err: %u (Before send)\n", err);
 
-	    for (int i = N-1; i >= N-5; i--) {
-                printf("%f ", h_C[i]);
-            }
-            printf("\n");
-	    
+	    // send(clnt_sock, &err, sizeof(CUresult), 0);
 	    
             transfer_start = std::chrono::system_clock::now();
-            // send(clnt_sock, h_C, ByteCount, 0);
-            send(clnt_sock, h_C, ByteCount, 0);
+            
+	    size_t chunk = 128;
+	    int count = ByteCount / chunk;
+	    // send(clnt_sock, h_C, ByteCount, 0);
+	    for(int i = 0; i < count; i++) {
+		send(clnt_sock, h_C+(i*32), chunk, 0);
+	    }
 	    transfer_end = std::chrono::system_clock::now();
             transfer_elapsed_seconds += transfer_end - transfer_start;
             std::cout << "transfer elapsed time: " << transfer_elapsed_seconds.count() << "s" << std::endl;
            
 	    printf("err: %u (After send)\n", err);
-
+	    
+	    
+	    for (int i = 0; i < 5; i++) {
+                printf("%f ", h_C[i]);
+            }
+            printf("\n");
+	    
 	    for (int i = N-1; i >= N-5; i--) {
                 printf("%f ", h_C[i]);
             }
             printf("\n");
+	   
 		
 	    send(clnt_sock, &err, sizeof(CUresult), 0);
 

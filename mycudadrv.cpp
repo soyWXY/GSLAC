@@ -305,10 +305,24 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void* srcHost, size_t ByteCou
 
     send(sock, &dstDevice, sizeof(CUdeviceptr), 0);
     send(sock, &ByteCount, sizeof(size_t), 0);
-    send(sock, srcHost, ByteCount, 0);
+    // send(sock, srcHost, ByteCount, 0);
+
+    float* buf = (float*)malloc(ByteCount);
+
+    memcpy(buf, srcHost, ByteCount);
+
+    size_t chunk = 128;
+    int count = ByteCount / chunk;
+    for (int i = 0; i < count; i++) {
+        send(sock, buf+i*32, chunk, 0);
+    }
+
+    std::cout << "ByteCount: " << ByteCount << std::endl;
 
     CUresult err;
     recv(sock, &err, sizeof(CUresult), 0);
+
+    free(buf);
 
     close(sock);
     
@@ -430,11 +444,38 @@ CUresult cuMemcpyDtoH(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount)
     send(sock, com, sizeof(com), 0);
 
     send(sock, &ByteCount, sizeof(size_t), 0);
+ 
+    // CUresult err;
+    // recv(sock, &err, sizeof(CUresult), 0);
 
-    recv(sock, dstHost, ByteCount, 0);
+    /*
+    int rb = recv(sock, dstHost, ByteCount, 0);
+    if (rb < 0)
+    {
+        perror("recv() error");
+	close(sock);
+	exit(-1);
+    }
+    std::cout << "ByteCount: " << ByteCount << std::endl;
+    std::cout << "Receive " << rb << " bytes" << std::endl;
+    */
+    float* buf = (float*)malloc(ByteCount);
+    int rb = 0;
+    size_t chunk = 128;
+    int count = ByteCount / chunk;
+
+    for (int i = 0; i < count; i++) {
+	int temp = recv(sock, buf+i*32, chunk, 0);
+	rb += temp;
+    }
+    std::cout << "Final: Receive " << rb << " bytes" << std::endl;
+
+    memcpy(dstHost, buf, ByteCount);
 
     CUresult err;
     recv(sock, &err, sizeof(CUresult), 0);
+
+    free(buf);
 
     close(sock);
     

@@ -161,21 +161,6 @@ int main(int argc, char **argv)
         }
     }
 
-    
-    printf("\n");
-    // for (int i = 1; i < 5; i++) {
-	//     for (int j = 0; j < 5; j++) {
-	// 	    printf("%f ", h_C[i*WA+j]);
-	//     }
-	//     printf("\n");
-    // }
-    for (int i = WA*WA-1; i >= WA*WA-5; i--) {
-        printf("%f ", h_C[i]);
-    }
-    printf("\n");
-    
-    
-
     printf("%s\n", correct ? "Result = PASS" : "Result = FAIL");
 
     return CleanupNoFailure();
