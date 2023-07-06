@@ -68,8 +68,8 @@ int CleanupNoFailure();
 void RandomInit(float *, int);
 void constantInit(float *data, int size, float val);
 
-std::chrono::high_resolution_clock::time_point init_start, init_end, total_start, total_end;
-std::chrono::duration<double> init_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
@@ -78,7 +78,7 @@ std::chrono::duration<double> init_elapsed_seconds, total_elapsed_seconds;
 
 int main(int argc, char **argv)
 {
-    init_start = std::chrono::system_clock::now();
+    init_start = total_start = std::chrono::system_clock::now();
     int WA, HA, WB, HB, WC, HC;
 
     WA = atoi(argv[1]);
@@ -102,8 +102,6 @@ int main(int argc, char **argv)
     init_end = std::chrono::system_clock::now();
     init_elapsed_seconds = init_end-init_start;
     std::cout << "init elapsed time: " << init_elapsed_seconds.count() << "s" << std::endl;
-
-    total_start = std::chrono::system_clock::now();
 
     // allocate host memory for matrices A and B
     unsigned int size_A = WA * HA;
@@ -130,8 +128,12 @@ int main(int argc, char **argv)
     checkCudaErrors(cuMemAlloc(&d_C, mem_size_C));
 
     // Copy matrix from host memory to device memory
+    transfer_elapsed_seconds = std::chrono::nanoseconds::zero();
+    transfer_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemcpyHtoD(d_A, h_A, mem_size_A));
     checkCudaErrors(cuMemcpyHtoD(d_B, h_B, mem_size_B));
+    transfer_end = std::chrono::system_clock::now();
+    transfer_elapsed_seconds += transfer_end-transfer_start;
 
     void *args[5] = {&d_A, &d_B, &d_C, &WA, &WB};
 
@@ -144,11 +146,19 @@ int main(int argc, char **argv)
                             0,
                             NULL, args, NULL));
 
-    
+    sync_start = std::chrono::system_clock::now();
     checkCudaErrors(cuCtxSynchronize());
+    sync_end = std::chrono::system_clock::now();
+    sync_elapsed_seconds = sync_end-sync_start;
+    std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
 
     // copy the result from device back to host
+    transfer_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemcpyDtoH(h_C, d_C, mem_size_C));
+    transfer_end = std::chrono::system_clock::now();
+    transfer_elapsed_seconds += transfer_end-transfer_start;
+    std::cout << "transfer elapsed time: " << transfer_elapsed_seconds.count() << "s" << std::endl;
+
 
     // Verify result
     printf("Checking computed result for correctness: ");

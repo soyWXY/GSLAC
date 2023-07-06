@@ -58,22 +58,17 @@ CUdeviceptr d_C;
 int CleanupNoFailure();
 void RandomInit(float *, int);
 
-std::chrono::high_resolution_clock::time_point init_start, init_end, total_start, total_end;
-std::chrono::duration<double> init_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
 #define PTX_FILE "vectorAdd_kernel.ptx"
 #endif
 
-//define kernel function file
-#ifndef PTX_FILE
-#define PTX_FILE "vectorAdd_kernel.ptx"
-#endif
-
 int main(int argc, char **argv)
 {
-    init_start = std::chrono::system_clock::now();
+    init_start = total_start = std::chrono::system_clock::now();
     int N;
     if (argc < 2) {
         N = 500;
@@ -98,7 +93,6 @@ int main(int argc, char **argv)
     init_end = std::chrono::system_clock::now();
     init_elapsed_seconds = init_end-init_start;
     std::cout << "init elapsed time: " << init_elapsed_seconds.count() << "s" << std::endl;
-    total_start = std::chrono::system_clock::now();
 
     // allocate host vectors
     h_A = (float *)malloc(size);
@@ -112,9 +106,15 @@ int main(int argc, char **argv)
     checkCudaErrors(cuMemAlloc(&d_A, size));
     checkCudaErrors(cuMemAlloc(&d_B, size));
     checkCudaErrors(cuMemAlloc(&d_C, size));
+
+
     // Copy vectors from host memory to device memory
+    transfer_elapsed_seconds = std::chrono::nanoseconds::zero();
+    transfer_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemcpyHtoD(d_A, h_A, size));
     checkCudaErrors(cuMemcpyHtoD(d_B, h_B, size));
+    transfer_end = std::chrono::system_clock::now();
+    transfer_elapsed_seconds += transfer_end-transfer_start;
 
     int threadsPerBlock = 256;
     int blocksPerGrid   = (N + threadsPerBlock - 1) / threadsPerBlock;
@@ -122,24 +122,23 @@ int main(int argc, char **argv)
     void *args[] = { &d_A, &d_B, &d_C, &N };
     
     // Launch the CUDA kernel
-        checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
-                               threadsPerBlock, 1, 1,
-                               0,
-                               NULL, args, NULL));
+    checkCudaErrors(cuLaunchKernel(vecAdd_kernel,  blocksPerGrid, 1, 1,
+                            threadsPerBlock, 1, 1,
+                            0,
+                            NULL, args, NULL));
 
-    // sync_start = std::chrono::system_clock::now();
-    
+    sync_start = std::chrono::system_clock::now();
     checkCudaErrors(cuCtxSynchronize());
-
-    /*
     sync_end = std::chrono::system_clock::now();
     sync_elapsed_seconds = sync_end-sync_start;
-
     std::cout << "sync elapsed time: " << sync_elapsed_seconds.count() << "s" << std::endl;
-    */
 
     // copy the result from device back to host
+    transfer_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemcpyDtoH(h_C, d_C, size));
+    transfer_end = std::chrono::system_clock::now();
+    transfer_elapsed_seconds += transfer_end-transfer_start;
+    std::cout << "transfer elapsed time: " << transfer_elapsed_seconds.count() << "s" << std::endl;
 
     // Verify result
     int i;
