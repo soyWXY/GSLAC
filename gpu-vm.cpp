@@ -290,7 +290,7 @@ int main(int argc, char **argv)
     		for (int i = 0; i < count; i++) {
         	    rb += recv(clnt_sock, h_A+(i*32), chunk, 0);
     		}
-    		std::cout << "Receive " << rb << " bytes" << std::endl;
+    		// std::cout << "Receive " << rb << " bytes" << std::endl;
 		
 		/*
 		rb = recv(clnt_sock, h_A, ByteCount, 0);
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
                 for (int i = 0; i < count; i++) {
                     rb += recv(clnt_sock, h_B+(i*32), chunk, 0);
                 }
-                std::cout << "Receive " << rb << " bytes" << std::endl;
+                // std::cout << "Receive " << rb << " bytes" << std::endl;
 
 		/*
 		rb = recv(clnt_sock, h_B, ByteCount, 0);

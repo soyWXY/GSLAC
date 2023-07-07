@@ -317,7 +317,7 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void* srcHost, size_t ByteCou
         send(sock, buf+i*32, chunk, 0);
     }
 
-    std::cout << "ByteCount: " << ByteCount << std::endl;
+    // std::cout << "ByteCount: " << ByteCount << std::endl;
 
     CUresult err;
     recv(sock, &err, sizeof(CUresult), 0);
@@ -468,7 +468,7 @@ CUresult cuMemcpyDtoH(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount)
 	int temp = recv(sock, buf+i*32, chunk, 0);
 	rb += temp;
     }
-    std::cout << "Final: Receive " << rb << " bytes" << std::endl;
+    // std::cout << "Final: Receive " << rb << " bytes" << std::endl;
 
     memcpy(dstHost, buf, ByteCount);
 

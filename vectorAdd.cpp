@@ -58,8 +58,8 @@ CUdeviceptr d_C;
 int CleanupNoFailure();
 void RandomInit(float *, int);
 
-std::chrono::high_resolution_clock::time_point init_start, init_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
-std::chrono::duration<double> init_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, zeroing_start, zeroing_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, zeroing_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
@@ -103,9 +103,12 @@ int main(int argc, char **argv)
     RandomInit(h_A, N);
     RandomInit(h_B, N);
     // Allocate vectors in device memory
+    zeroing_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemAlloc(&d_A, size));
     checkCudaErrors(cuMemAlloc(&d_B, size));
     checkCudaErrors(cuMemAlloc(&d_C, size));
+    zeroing_elapsed_seconds = zeroing_end-zeroing_start;
+    std::cout << "zeroing elapsed time: " << zeroing_elapsed_seconds.count() << "s" << std::endl;
 
 
     // Copy vectors from host memory to device memory

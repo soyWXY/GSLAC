@@ -68,8 +68,8 @@ int CleanupNoFailure();
 void RandomInit(float *, int);
 void constantInit(float *data, int size, float val);
 
-std::chrono::high_resolution_clock::time_point init_start, init_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
-std::chrono::duration<double> init_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
+std::chrono::high_resolution_clock::time_point init_start, init_end, zeroing_start, zeroing_end, transfer_start, transfer_end, sync_start, sync_end, total_start, total_end;
+std::chrono::duration<double> init_elapsed_seconds, zeroing_elapsed_seconds, transfer_elapsed_seconds, sync_elapsed_seconds, total_elapsed_seconds;
 
 //define input ptx file
 #ifndef PTX_FILE
@@ -123,9 +123,13 @@ int main(int argc, char **argv)
     h_C = (float *)malloc(mem_size_C);
 
     // allocate device memory
+    zeroing_start = std::chrono::system_clock::now();
     checkCudaErrors(cuMemAlloc(&d_A, mem_size_A));
     checkCudaErrors(cuMemAlloc(&d_B, mem_size_B));
     checkCudaErrors(cuMemAlloc(&d_C, mem_size_C));
+    zeroing_elapsed_seconds = zeroing_end-zeroing_start;
+    std::cout << "zeroing elapsed time: " << zeroing_elapsed_seconds.count() << "s" << std::endl;
+
 
     // Copy matrix from host memory to device memory
     transfer_elapsed_seconds = std::chrono::nanoseconds::zero();
