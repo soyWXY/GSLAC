@@ -42,7 +42,6 @@ int main(int argc, char **argv) {
     int rc, rb = -1;
     int serv_sock, max_sd, clnt_sock;
     struct timeval timeout;
-    // struct fd_set master_set, working_set;
 
     serv_sock = socket(AF_VSOCK, SOCK_STREAM, 0);
     if (serv_sock < 0) {
@@ -53,7 +52,6 @@ int main(int argc, char **argv) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     serv_addr.svm_port = htons(5566);
     serv_addr.svm_cid = VMADDR_CID_ANY;
 
@@ -106,12 +104,6 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    /*
-    FD_ZERO(&master_set);
-    max_sd = serv_sock;
-    FD_SET(serv_sock, &master_set);
-    */
-
     timeout.tv_sec = 60;
     timeout.tv_usec = 0;
 
@@ -122,7 +114,6 @@ int main(int argc, char **argv) {
                                &clnt_addr_size)) > 0) {
         char buf[5] = {-1};
         size_t msg_len = recv(clnt_sock, &buf, sizeof(buf), 0);
-        // printf("Received %lu bytes: %.*s\n", msg_len, msg_len, buf);
         std::cout << "msg_len: " << msg_len << ", buf: " << buf << std::endl;
 
         if (strcmp(buf, "0001") == 0) {
@@ -306,28 +297,10 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < count; i++) {
                     rb += recv(clnt_sock, h_A + (i * 32), chunk, 0);
                 }
-                // std::cout << "Receive " << rb << " bytes" << std::endl;
-
-                /*
-                rb = recv(clnt_sock, h_A, ByteCount, 0);
-                if (rb < 0) {
-                    perror("recv() failed");
-                    exit(-1);
-                }
-                */
                 transfer_end = std::chrono::system_clock::now();
                 transfer_elapsed_seconds += transfer_end - transfer_start;
 
                 err = cuMemcpyHtoD(d_A, h_A, ByteCount);
-
-                /*
-                for (int i = 0; i < 5; i++) {
-                        for (int j = 0; j < 5; j++) {
-                                printf("%f ", h_A[i*width+j]);
-                        }
-                        printf("\n");
-                }
-                */
 
                 printf("ByteCount: %zu\n", ByteCount);
                 printf("Receive %d bytes\n", rb);
@@ -351,28 +324,10 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < count; i++) {
                     rb += recv(clnt_sock, h_B + (i * 32), chunk, 0);
                 }
-                // std::cout << "Receive " << rb << " bytes" << std::endl;
-
-                /*
-                rb = recv(clnt_sock, h_B, ByteCount, 0);
-                if (rb < 0) {
-                    perror("recv() failed");
-                    exit(-1);
-                }
-                */
                 transfer_end = std::chrono::system_clock::now();
                 transfer_elapsed_seconds += transfer_end - transfer_start;
 
                 err = cuMemcpyHtoD(d_B, h_B, ByteCount);
-
-                /*
-                for (int i = 0; i < 5; i++) {
-                        for (int j = 0; j < 5; j++) {
-                                printf("%f ", h_B[i*width+j]);
-                        }
-                        printf("\n");
-                }
-                */
 
                 printf("ByteCount: %zu\n", ByteCount);
                 printf("Receive %d bytes\n", rb);
@@ -399,9 +354,6 @@ int main(int argc, char **argv) {
             if (atoi(argv[1]) == 1) args = args1;
 
             if (atoi(argv[1]) == 2) args = args2;
-
-            // void *args[] = { &d_A, &d_B, &d_C, &N };
-            // void *args[] = { &d_A, &d_B, &d_C, &width, &width };
 
             cuLaunchKernel = reinterpret_cast<CUresult (*)(
                 CUfunction, unsigned int, unsigned int, unsigned int,
@@ -461,13 +413,10 @@ int main(int argc, char **argv) {
 
             printf("err: %u (Before send)\n", err);
 
-            // send(clnt_sock, &err, sizeof(CUresult), 0);
-
             transfer_start = std::chrono::system_clock::now();
 
             size_t chunk = 128;
             int count = ByteCount / chunk;
-            // send(clnt_sock, h_C, ByteCount, 0);
             for (int i = 0; i < count; i++) {
                 send(clnt_sock, h_C + (i * 32), chunk, 0);
             }

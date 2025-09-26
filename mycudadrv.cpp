@@ -12,7 +12,6 @@
 #include <iostream>
 
 #define VMADDR_CID_GPU_SANDBOX 3
-// #define HOST "127.0.0.1"
 #define PORT 5566
 
 CUresult cuInit(unsigned int Flags) {
@@ -21,7 +20,6 @@ CUresult cuInit(unsigned int Flags) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -38,19 +36,6 @@ CUresult cuInit(unsigned int Flags) {
 
     std::cout << "Hack cuInit in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuInit)(unsigned int);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuInit = reinterpret_cast<CUresult(*)(unsigned int)>(dlsym(handle,
-    // "cuInit"));
-
-    // CUresult err;
-    // err = cuInit(Flags);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -60,7 +45,6 @@ CUresult cuDeviceGet(CUdevice *device, int ordinal) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -77,19 +61,6 @@ CUresult cuDeviceGet(CUdevice *device, int ordinal) {
 
     std::cout << "Hack cuDeviceGet in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuDeviceGet)(CUdevice*, int);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuDeviceGet = reinterpret_cast<CUresult(*)(CUdevice*, int)>(dlsym(handle,
-    // "cuDeviceGet"));
-
-    // CUresult err;
-    // err = cuDeviceGet(device, ordinal);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -99,7 +70,6 @@ CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -116,19 +86,6 @@ CUresult cuCtxCreate(CUcontext *pctx, unsigned int flags, CUdevice dev) {
 
     std::cout << "Hack cuCtxCreate in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuCtxCreate)(CUcontext*, unsigned int, CUdevice);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuCtxCreate = reinterpret_cast<CUresult(*)(CUcontext*, unsigned int,
-    // CUdevice)>(dlsym(handle, "cuCtxCreate"));
-
-    // CUresult err;
-    // err = cuCtxCreate(pctx, flags, dev);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -138,7 +95,6 @@ CUresult cuCtxGetApiVersion(CUcontext ctx, unsigned int *version) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -155,19 +111,6 @@ CUresult cuCtxGetApiVersion(CUcontext ctx, unsigned int *version) {
 
     std::cout << "Hack cuCtxGetApiVersion in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuCtxGetApiVersion)(CUcontext, unsigned int*);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuCtxGetApiVersion = reinterpret_cast<CUresult(*)(CUcontext, unsigned
-    // int*)>(dlsym(handle, "cuCtxGetApiVersion"));
-
-    // CUresult err;
-    // err = cuCtxGetApiVersion(ctx, version);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -177,7 +120,6 @@ CUresult cuModuleLoad(CUmodule *module, const char *fname) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -192,19 +134,6 @@ CUresult cuModuleLoad(CUmodule *module, const char *fname) {
 
     std::cout << "Hack cuModuleLoad in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuModuleLoad)(CUmodule*, const char*);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuModuleLoad = reinterpret_cast<CUresult(*)(CUmodule*, const
-    // char*)>(dlsym(handle, "cuModuleLoad"));
-
-    // CUresult err;
-    // err = cuModuleLoad(module, fname);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -215,7 +144,6 @@ CUresult cuModuleGetFunction(CUfunction *hfunc, CUmodule hmod,
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -230,19 +158,6 @@ CUresult cuModuleGetFunction(CUfunction *hfunc, CUmodule hmod,
 
     std::cout << "Hack cuModuleGetFunction in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuModuleGetFunction)(CUfunction*, CUmodule, const char*);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuModuleGetFunction = reinterpret_cast<CUresult(*)(CUfunction*, CUmodule,
-    // const char*)>(dlsym(handle, "cuModuleGetFunction"));
-
-    // CUresult err;
-    // err = cuModuleGetFunction(hfunc, hmod, name);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -252,7 +167,6 @@ CUresult cuMemAlloc(CUdeviceptr *dptr, size_t bytesize) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -272,19 +186,6 @@ CUresult cuMemAlloc(CUdeviceptr *dptr, size_t bytesize) {
 
     std::cout << "Hack cuMemAlloc in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuMemAlloc)(CUdeviceptr*, size_t);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuMemAlloc = reinterpret_cast<CUresult(*)(CUdeviceptr*,
-    // size_t)>(dlsym(handle, "cuMemAlloc"));
-
-    // CUresult err;
-    // err = cuMemAlloc(dptr, bytesize);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -295,7 +196,6 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void *srcHost,
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -305,7 +205,6 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void *srcHost,
 
     send(sock, &dstDevice, sizeof(CUdeviceptr), 0);
     send(sock, &ByteCount, sizeof(size_t), 0);
-    // send(sock, srcHost, ByteCount, 0);
 
     float *buf = (float *)malloc(ByteCount);
 
@@ -317,8 +216,6 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void *srcHost,
         send(sock, buf + i * 32, chunk, 0);
     }
 
-    // std::cout << "ByteCount: " << ByteCount << std::endl;
-
     CUresult err;
     recv(sock, &err, sizeof(CUresult), 0);
 
@@ -327,19 +224,6 @@ CUresult cuMemcpyHtoD(CUdeviceptr dstDevice, const void *srcHost,
     close(sock);
 
     std::cout << "Hack cuMemcpyHtoD in libcuda.so" << std::endl;
-
-    // void *handle;
-    // CUresult (*cuMemcpyHtoD)(CUdeviceptr, const void*, size_t);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuMemcpyHtoD = reinterpret_cast<CUresult(*)(CUdeviceptr, const void*,
-    // size_t)>(dlsym(handle, "cuMemcpyHtoD"));
-
-    // CUresult err;
-    // err = cuMemcpyHtoD(dstDevice, srcHost, ByteCount);
-
-    // dlclose(handle);
 
     return err;
 }
@@ -354,7 +238,6 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX,
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -376,25 +259,6 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX,
 
     std::cout << "Hack cuLaunchKernel in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuLaunchKernel)(CUfunction, unsigned int, unsigned int,
-    // unsigned int, unsigned int, unsigned int, unsigned int, unsigned int,
-    // CUstream, void**, void**);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuLaunchKernel = reinterpret_cast<CUresult(*)(CUfunction, unsigned int,
-    // unsigned int, unsigned int, unsigned int, unsigned int, unsigned int,
-    // unsigned int, CUstream, void**, void**)>(dlsym(handle,
-    // "cuLaunchKernel"));
-
-    // CUresult err;
-    // err = cuLaunchKernel(f, gridDimX, gridDimY, gridDimZ,
-    //                     blockDimX, blockDimY, blockDimZ,
-    //                     sharedMemBytes, hStream, kernelParams, extra);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -404,7 +268,6 @@ CUresult cuCtxSynchronize() {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -419,19 +282,6 @@ CUresult cuCtxSynchronize() {
 
     std::cout << "Hack cuCtxSynchronize in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuCtxSynchronize)();
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuCtxSynchronize = reinterpret_cast<CUresult(*)()>(dlsym(handle,
-    // "cuCtxSynchronize"));
-
-    // CUresult err;
-    // err = cuCtxSynchronize();
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -441,7 +291,6 @@ CUresult cuMemcpyDtoH(void *dstHost, CUdeviceptr srcDevice, size_t ByteCount) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -451,20 +300,6 @@ CUresult cuMemcpyDtoH(void *dstHost, CUdeviceptr srcDevice, size_t ByteCount) {
 
     send(sock, &ByteCount, sizeof(size_t), 0);
 
-    // CUresult err;
-    // recv(sock, &err, sizeof(CUresult), 0);
-
-    /*
-    int rb = recv(sock, dstHost, ByteCount, 0);
-    if (rb < 0)
-    {
-        perror("recv() error");
-    close(sock);
-    exit(-1);
-    }
-    std::cout << "ByteCount: " << ByteCount << std::endl;
-    std::cout << "Receive " << rb << " bytes" << std::endl;
-    */
     float *buf = (float *)malloc(ByteCount);
     int rb = 0;
     size_t chunk = 128;
@@ -474,7 +309,6 @@ CUresult cuMemcpyDtoH(void *dstHost, CUdeviceptr srcDevice, size_t ByteCount) {
         int temp = recv(sock, buf + i * 32, chunk, 0);
         rb += temp;
     }
-    // std::cout << "Final: Receive " << rb << " bytes" << std::endl;
 
     memcpy(dstHost, buf, ByteCount);
 
@@ -487,19 +321,6 @@ CUresult cuMemcpyDtoH(void *dstHost, CUdeviceptr srcDevice, size_t ByteCount) {
 
     std::cout << "Hack cuMemcpyDtoH in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuMemcpyDtoH)(void*, CUdeviceptr, size_t);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuMemcpyDtoH = reinterpret_cast<CUresult(*)(void*, CUdeviceptr,
-    // size_t)>(dlsym(handle, "cuMemcpyDtoH"));
-
-    // CUresult err;
-    // err = cuMemcpyDtoH(dstHost, srcDevice, ByteCount);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -509,7 +330,6 @@ CUresult cuMemFree(CUdeviceptr dptr) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -524,19 +344,6 @@ CUresult cuMemFree(CUdeviceptr dptr) {
 
     std::cout << "Hack cuMemFree in libcuda.so" << std::endl;
 
-    // void *handle;
-    // CUresult (*cuMemFree)(CUdeviceptr);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuMemFree = reinterpret_cast<CUresult(*)(CUdeviceptr)>(dlsym(handle,
-    // "cuMemFree"));
-
-    // CUresult err;
-    // err = cuMemFree(dptr);
-
-    // dlclose(handle);
-
     return err;
 }
 
@@ -546,7 +353,6 @@ CUresult cuCtxDestroy(CUcontext ctx) {
     struct sockaddr_vm serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.svm_family = AF_VSOCK;
-    // serv_addr.sin_addr.s_addr = inet_addr(HOST);
     serv_addr.svm_port = htons(PORT);
     serv_addr.svm_cid = VMADDR_CID_GPU_SANDBOX;
     connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -560,19 +366,6 @@ CUresult cuCtxDestroy(CUcontext ctx) {
     close(sock);
 
     std::cout << "Hack cuCtxDestroy in libcuda.so" << std::endl;
-
-    // void *handle;
-    // CUresult (*cuCtxDestroy)(CUcontext);
-
-    // handle = dlopen("/usr/lib/x86_64-linux-gnu/libcuda.so", RTLD_LAZY);
-
-    // cuCtxDestroy = reinterpret_cast<CUresult(*)(CUcontext)>(dlsym(handle,
-    // "cuCtxDestroy"));
-
-    // CUresult err;
-    // err = cuCtxDestroy(ctx);
-
-    // dlclose(handle);
 
     return err;
 }

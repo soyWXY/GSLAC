@@ -1,4 +1,3 @@
-// Includes
 #include <cuda.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,31 +8,12 @@
 #include <ctime>
 #include <iostream>
 
-// includes, CUDA
-// #include <builtin_types.h>
-
 using namespace std;
-
-// #ifndef checkCudaErrors
-// #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-// // These are the inline versions for all of the SDK helper functions
-// inline void __checkCudaErrors(CUresult err, const char *file, const int line)
-// {
-//   if (CUDA_SUCCESS != err) {
-//     const char *errorStr = NULL;
-//     cuGetErrorString(err, &errorStr);
-//     fprintf(stderr,
-//             "checkCudaErrors() Driver API error = %04d \"%s\" from file <%s>,
-//             " "line %i.\n", err, errorStr, file, line);
-//     exit(EXIT_FAILURE);
-//   }
-// }
-// #endif
 
 #ifndef checkCudaErrors
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
 inline void __checkCudaErrors(CUresult err, const char *file, const int line) {
-    if (0 != err) {
+    if (CUDA_SUCCESS != err) {
         fprintf(stderr,
                 "checkCudaErrors() Driver API error = %04d from file <%s>, "
                 "line %i.\n",
@@ -87,8 +67,10 @@ int main(int argc, char **argv) {
     checkCudaErrors(cuInit(0));
     checkCudaErrors(cuDeviceGet(&cuDevice, 0));  // pick first device
     checkCudaErrors(cuCtxCreate(&cuContext, 0, cuDevice));
-    // checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
-    // printf("Client: API version: %u\n", api_version);
+#ifdef DEBUG
+    checkCudaErrors(cuCtxGetApiVersion(cuContext, &api_version));
+    printf("Client: API version: %u\n", api_version);
+#endif
     checkCudaErrors(cuModuleLoad(&cuModule, PTX_FILE));
     checkCudaErrors(
         cuModuleGetFunction(&vecAdd_kernel, cuModule, "VecAdd_kernel"));
